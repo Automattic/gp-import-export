@@ -4,7 +4,7 @@ gp_breadcrumb_project( $project );
 gp_tmpl_header();
 ?>
 
-	<h2><?php _e('Import Translations'); ?></h2>
+	<h2><?php _e('Bulk Import Translations'); ?></h2>
 	<form action="" method="post" enctype="multipart/form-data">
 		<input type="hidden" name="importer-step" value="1">
 		<dl>
