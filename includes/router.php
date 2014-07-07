@@ -82,7 +82,7 @@ class GP_Route_Importer extends GP_Route_Main {
 		$working_path = '/tmp' . $working_directory;
 
 		if ( $working_path !== realpath( $working_path ) ) {
-			$this->die_with_error('What');
+			$this->die_with_error( 'Error.' );
 		}
 
 		$pofiles = glob( "$working_path/*.po" );
@@ -93,17 +93,17 @@ class GP_Route_Importer extends GP_Route_Main {
 				$translation_set = GP::$translation_set->get( $target_set );
 
 				if ( ! $translation_set ) {
-					$this->errors[] = sprintf( __('Couldn&#8217;t find translation set id %d!'), $traget_set );
+					$this->errors[] = sprintf( __( 'Couldn&#8217;t find translation set id %d!' ), $target_set );
 				}
 
 				$format = gp_array_get( GP::$formats, 'po', null );
 				$translations = $format->read_translations_from_file( $po_file, $project );
 				if ( ! $translations ) {
-					$this->errors[] = sprintf( __('Couldn&#8217;t load translations from file %s!'), basename( $po_file ) );
+					$this->errors[] = sprintf( __( 'Couldn&#8217;t load translations from file %s!' ), basename( $po_file ) );
 					continue;
 				}
 				$translations_added = $translation_set->import( $translations );
-				$this->notices[] = sprintf(__("%s translations were added from %s"), $translations_added, basename( $po_file ) );
+				$this->notices[] = sprintf( __( '%s translations were added from %s' ), $translations_added, basename( $po_file ) );
 			}
 		}
 		$this->notices = array( implode('<br>', $this->notices ) );
