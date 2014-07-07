@@ -61,7 +61,7 @@ class GP_Route_Importer extends GP_Route_Main {
 
 		// Make sure we have a fresh working directory.
 		if ( file_exists( $working_path ) ) {
-			gp_importer_rrmdir( $working_path );
+			GP_Importer::rrmdir( $working_path );
 		}
 
 		mkdir( $working_path );
@@ -110,7 +110,7 @@ class GP_Route_Importer extends GP_Route_Main {
 		$this->errors = array( implode('<br>', $this->errors ) );
 
 		//cleanup
-		gp_importer_rrmdir( $working_path );
+		GP_Importer::rrmdir( $working_path );
 
 		$this->redirect();
 	}
