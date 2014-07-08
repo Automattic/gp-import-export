@@ -8,9 +8,9 @@ gp_tmpl_header();
 	<form action="" method="post" enctype="multipart/form-data">
 		<input type="hidden" name="importer-step" value="1">
 		<dl>
-			<dt><label for="import-file"><?php _e('Import File:'); ?></label></dt>
+			<dt><label for="import-file"><?php _e( 'Import File:' ); ?></label></dt>
 			<dd><input type="file" name="import-file" id="import-file" /></dd>
-			<dt><input type="submit" value="<?php echo esc_attr( __('Import') ); ?>"></dt>
+			<dt><input type="submit" value="<?php echo esc_attr( __( 'Import' ) ); ?>"></dt>
 		</dl>
 	</form>
 
