@@ -19,7 +19,7 @@ gp_tmpl_header();
 				</p>
 			<?php endforeach; ?>
 			</dd>
-			<dt><input type="submit" value="<?php echo esc_attr( __('Import') ); ?>"></dt>
+			<dt><input type="submit" value="<?php echo esc_attr( __('Review') ); ?>"></dt>
 		</dl>
 	</form>
 

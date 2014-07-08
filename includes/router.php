@@ -33,18 +33,31 @@ class GP_Route_Importer extends GP_Route_Main {
 
 		$step = gp_post( 'importer-step', '1' );
 
-		if ( $step == 2 ) {
-			$this->process_imports( $project );
-			return;
+
+		switch( $step ) {
+			case 1:
+			default:
+				$this->process_archive_file( $project );
+				break;
+			case 2:
+				$this->confirm_selections( $project );
+				break;
+			case 3:
+				$this->process_imports( $project );
+				break;
 		}
 
+	}
+
+	function process_archive_file( $project ) {
 		$sets = GP::$translation_set->by_project_id( $project->id );
 		$sets_for_select = array_combine(
 			array_map( function( $s ){ return $s->id; }, $sets ),
 			array_map( function( $s ){ return $s->name; }, $sets )
 		);
-		unset( $sets );
 
+		$sets_for_select = array( '0' => __('&mdash; Translation Set &mdash;' ) ) + $sets_for_select;
+		unset( $sets );
 
 		if ( ! is_uploaded_file( $_FILES['import-file']['tmp_name'] ) ) {
 			$this->redirect_with_error( __( 'Error uploading the file.' ) );
@@ -55,6 +68,7 @@ class GP_Route_Importer extends GP_Route_Main {
 				$this->redirect_with_error( __( 'Please upload a zip file.' ) );
 			}
 		}
+
 		$filename = preg_replace("([^\w\s\d\-_~,;:\[\]\(\].]|[\.]{2,})", '',  $_FILES['import-file']['name'] );
 		$slug = preg_replace( '/\.zip$/', '', $filename );
 		$working_directory = '/bulk-importer-' . $slug;
@@ -75,6 +89,34 @@ class GP_Route_Importer extends GP_Route_Main {
 		}
 
 		$this->tmpl( 'importer-files', get_defined_vars() );
+	}
+
+	function confirm_selections( $project ) {
+
+		$working_directory = gp_post( 'working-directory' );
+		$working_path = '/tmp' . $working_directory;
+
+		if ( $working_path !== realpath( $working_path ) ) {
+			$this->die_with_error( 'Error.' );
+		}
+
+		$to_import = array();
+		$pofiles = glob( "$working_path/*.po" );
+		foreach( $pofiles as $po_file ) {
+			$target_set = gp_post( basename( $po_file, '.po') );
+			if ( $target_set  ) {
+
+				$translation_set = GP::$translation_set->get( $target_set );
+
+				if ( ! $translation_set ) {
+					$this->errors[] = sprintf( __( 'Couldn&#8217;t find translation set id %d!' ), $target_set );
+				}
+
+				$to_import[ basename( $po_file ) ] = array( 'id' => $translation_set->id, 'name' => $translation_set->name_with_locale() );
+			}
+		}
+
+		$this->tmpl( 'importer-confirmation', get_defined_vars() );
 	}
 
 	function process_imports( $project ) {
