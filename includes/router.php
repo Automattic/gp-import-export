@@ -116,6 +116,10 @@ class GP_Route_Importer extends GP_Route_Main {
 			}
 		}
 
+		if ( empty( $to_import ) ) {
+			$this->redirect_with_error( __( 'Please select a matching translation set for each PO file.' ) );
+		}
+
 		$this->tmpl( 'importer-confirmation', get_defined_vars() );
 	}
 
