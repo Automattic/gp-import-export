@@ -10,7 +10,7 @@ class GP_Route_Importer extends GP_Route_Main {
 		$project = GP::$project->by_path( $project_path );
 
 		if ( ! $project ) {
-			return $this->die_with_404();
+			$this->die_with_404();
 		}
 
 		if ( $this->cannot_and_redirect( 'write', 'project', $project->id ) ) {
@@ -24,7 +24,7 @@ class GP_Route_Importer extends GP_Route_Main {
 		$project = GP::$project->by_path( $project_path );
 
 		if ( ! $project ) {
-			return $this->die_with_404();
+			$this->die_with_404();
 		}
 
 		if ( $this->cannot_and_redirect( 'write', 'project', $project->id ) ) {
@@ -34,7 +34,8 @@ class GP_Route_Importer extends GP_Route_Main {
 		$step = gp_post( 'importer-step', '1' );
 
 		if ( $step == 2 ) {
-			return $this->process_imports( $project );
+			$this->process_imports( $project );
+			return;
 		}
 
 		$sets = GP::$translation_set->by_project_id( $project->id );
@@ -69,7 +70,7 @@ class GP_Route_Importer extends GP_Route_Main {
 
 		$pofiles = glob("$working_path/*.po");
 		if ( empty( $pofiles) ) {
-			gp_importer_rrmdir( $working_path );
+			GP_Importer::rrmdir( $working_path );
 			$this->redirect_with_error( __( 'No PO files found in zip archive' ) );
 		}
 
