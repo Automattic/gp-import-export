@@ -132,6 +132,10 @@ class GP_Route_Importer extends GP_Route_Main {
 			$this->die_with_error( 'Error.' );
 		}
 
+		if ( 'no' == gp_post( 'overwrite', 'yes' ) ) {
+			add_filter( 'translation_set_import_over_existing', '__return_false' );
+		}
+
 		$pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
