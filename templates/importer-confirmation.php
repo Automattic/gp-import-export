@@ -26,6 +26,14 @@ gp_tmpl_header();
 				), 'yes' ); ?>
 			</dd>
 			<dt><input type="submit" value="<?php echo esc_attr( __( 'Import' ) ); ?>"></dt>
+			<dt><?php _e( 'Translation Status' ); ?></dt>
+			<dd>
+				<?php echo gp_radio_buttons( 'status', array(
+					'current' => 'Current',
+					'waiting' => 'Waiting',
+				), 'current' ); ?>
+			</dd>
+			<dt><input type="submit" value="<?php echo esc_attr( __( 'Import' ) ); ?>"></dt>
 		</dl>
 	</form>
 

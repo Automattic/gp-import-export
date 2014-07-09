@@ -136,6 +136,13 @@ class GP_Route_Importer extends GP_Route_Main {
 			add_filter( 'translation_set_import_over_existing', '__return_false' );
 		}
 
+		if ( 'waiting' == gp_post( 'status', 'current' ) ) {
+			add_filter( 'translation_set_import_status', function( $status ) {
+				return 'waiting';
+			});
+		}
+
+
 		$pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
