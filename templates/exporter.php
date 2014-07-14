@@ -13,7 +13,6 @@ gp_tmpl_header();
 			<dt><label><?php _e( 'Translations status:' ); ?></label></dt>
 			<dd>
 				<?php
-				//TODO: put those values in a static - they're the same as in the translations filtering UI
 				echo gp_radio_buttons( 'filters[status]',
 					array(
 						'current_or_waiting_or_fuzzy_or_untranslated' => __('Current/waiting/fuzzy + untranslated (All)'),
