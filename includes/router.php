@@ -72,7 +72,7 @@ class GP_Route_Importer extends GP_Route_Main {
 		$filename = preg_replace("([^\w\s\d\-_~,;:\[\]\(\].]|[\.]{2,})", '',  $_FILES['import-file']['name'] );
 		$slug = preg_replace( '/\.zip$/', '', $filename );
 		$working_directory = '/bulk-importer-' . $slug;
-		$working_path = '/tmp' . $working_directory;
+		$working_path = sys_get_temp_dir() . $working_directory;
 
 		// Make sure we have a fresh working directory.
 		if ( file_exists( $working_path ) ) {
