@@ -1,13 +1,13 @@
 <?php
 
-/* GP_Importer
+/* GP_Import_Export
  * This plugin adds a "Bulk Import" project action that allows admins to import
  * a zip archive with multiple PO files to different sets
  */
 
 require_once( dirname(__FILE__) .'/includes/router.php' );
 
-class GP_Importer extends GP_Plugin {
+class GP_Import_Export extends GP_Plugin {
 
 	var $id = 'importer';
 
@@ -20,13 +20,16 @@ class GP_Importer extends GP_Plugin {
 	function add_routes() {
 		$path = '(.+?)';
 
-		GP::$router->add( "/importer/$path", array( 'GP_Route_Importer', 'importer_get' ), 'get' );
-		GP::$router->add( "/importer/$path", array( 'GP_Route_Importer', 'importer_post' ), 'post' );
+		GP::$router->add( "/importer/$path", array( 'GP_Route_Import_Export', 'importer_get' ), 'get' );
+		GP::$router->add( "/importer/$path", array( 'GP_Route_Import_Export', 'importer_post' ), 'post' );
 
+		GP::$router->add( "/exporter/$path/-do", array( 'GP_Route_Import_Export', 'exporter_do_get' ), 'get' );
+		GP::$router->add( "/exporter/$path", array( 'GP_Route_Import_Export', 'exporter_get' ), 'get' );
 	}
 
 	function gp_project_actions( $actions, $project ) {
 		$actions[] = gp_link_get( gp_url( '/importer/' . $project->path ), __( 'Bulk Import Translations' ) );
+		$actions[] = gp_link_get( gp_url( '/exporter/' . $project->path ), __( 'Bulk Export Translations' ) );
 		return $actions;
 	}
 
@@ -48,4 +51,4 @@ class GP_Importer extends GP_Plugin {
 	}
 }
 
-GP::$plugins->importer = new GP_Importer;
+GP::$plugins->import_export = new GP_Import_Export;

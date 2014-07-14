@@ -1,9 +1,103 @@
 <?php
 
-class GP_Route_Importer extends GP_Route_Main {
+class GP_Route_Import_export extends GP_Route_Main {
 
 	function __construct() {
 		$this->template_path = dirname( dirname( __FILE__ ) ) . '/templates/';
+	}
+
+	function exporter_get( $project_path ) {
+		$project = GP::$project->by_path( $project_path );
+
+		if ( ! $project ) {
+			$this->die_with_404();
+		}
+
+		$can_write = $this->can( 'write', 'project', $project->id );
+
+		if ( isset( GP::$plugins->views ) ) {
+			GP::$plugins->views->set_project_id( $project->id );
+			$views = GP::$plugins->views->views;
+			$views_for_select = array( '' =>  __('&mdash; Select &mdash;' ) );
+			foreach ( $views as $id => $view ) {
+				$views_for_select[$id] = $view->name;
+			}
+			unset( $views );
+		}
+
+		$translation_sets = GP::$translation_set->by_project_id( $project->id );
+
+		$values = array_map( function( $set ) { return $set->id; }, $translation_sets );
+		$labels = array_map( function( $set ) { return $set->name_with_locale(); }, $translation_sets );
+		$sets_for_select =  array( '' => __('&mdash; All &mdash;') ) +  array_combine( $values, $labels );
+		$this->tmpl( 'exporter', get_defined_vars() );
+	}
+
+	function exporter_do_get( $project_path ) {
+		$project = GP::$project->by_path( $project_path );
+
+		if ( ! $project ) {
+			$this->die_with_404();
+		}
+
+		if ( isset( GP::$plugins->views ) ) {
+			GP::$plugins->views->set_project_id( $project->id );
+		}
+
+		@ini_set('memory_limit', '256M');
+
+		$slug = str_replace( '/', '-', $project_path ) . date( 'Y-d-m-Hi' );
+		$working_path = '/tmp/' . $slug ;
+
+		// Make sure we have a fresh working directory.
+		if ( file_exists( $working_path ) ) {
+			GP_Import_Export::rrmdir( $working_path );
+		}
+
+		mkdir( $working_path );
+
+		$format = gp_array_get( GP::$formats, gp_get( 'format', 'po' ), null );
+
+		if ( ! $format ) {
+			return $this->die_with_404();
+		}
+
+		$translations_sets = gp_get('translation_sets');
+		if ( ! array_filter( $translations_sets ) || in_array( '0', $translations_sets ) ){
+			$_translation_sets = GP::$translation_set->by_project_id( $project->id );
+			$translations_sets = array_map( function( $set ) { return $set->id; }, $_translation_sets );
+		};
+
+		foreach ( $translations_sets as $set_id ) {
+			$translation_set = GP::$translation_set->get( $set_id );
+			if ( ! $translation_set ) {
+				$this->errors[] = 'Translation set not found'; //TODO: do something with this
+			}
+			$locale = GP_Locales::by_slug( $translation_set->locale );
+			$filename = $working_path . '/' . sprintf(  '%s-%s.' . $format->extension, str_replace( '/', '-', $project->path ), $locale->slug );
+			$entries = GP::$translation->for_export( $project, $translation_set, gp_get( 'filters' ) );
+			file_put_contents(  $filename, $format->print_exported_file( $project, $locale, $translation_set, $entries ) );
+		}
+
+		$archive_name = $slug . '.zip';
+		$archive_file =  sys_get_temp_dir() . '/' . $archive_name;
+
+		$cwd = getcwd();
+		chdir( sys_get_temp_dir() );
+		$zip_command = "zip -r " . escapeshellarg( $archive_file ) . ' ' . escapeshellarg( $slug );
+		$zip_output = array();
+		$zip_status = null;
+		exec( $zip_command, $zip_output, $zip_status );
+		chdir( $cwd );
+		if ( 0 !== $zip_status ) {
+			//TODO: error
+		}
+
+		$this->headers_for_download( $archive_file );
+		readfile( $archive_file );
+
+		GP_Import_Export::rrmdir( $working_path );
+		unlink( $archive_file );
 	}
 
 	function importer_get( $project_path ) {
@@ -76,7 +170,7 @@ class GP_Route_Importer extends GP_Route_Main {
 
 		// Make sure we have a fresh working directory.
 		if ( file_exists( $working_path ) ) {
-			GP_Importer::rrmdir( $working_path );
+			GP_Import_Export::rrmdir( $working_path );
 		}
 
 		mkdir( $working_path );
@@ -84,7 +178,7 @@ class GP_Route_Importer extends GP_Route_Main {
 
 		$pofiles = glob("$working_path/*.po");
 		if ( empty( $pofiles) ) {
-			GP_Importer::rrmdir( $working_path );
+			GP_Import_Export::rrmdir( $working_path );
 			$this->redirect_with_error( __( 'No PO files found in zip archive' ) );
 		}
 
@@ -168,9 +262,22 @@ class GP_Route_Importer extends GP_Route_Main {
 		$this->errors = array( implode('<br>', $this->errors ) );
 
 		//cleanup
-		GP_Importer::rrmdir( $working_path );
+		GP_Import_Export::rrmdir( $working_path );
 
 		$this->redirect();
+	}
+
+
+	function headers_for_download( $filename ) {
+		$this->header("Pragma: public");
+		$this->header("Expires: 0");
+		$this->header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+		$this->header("Cache-Control: public");
+		$this->header("Content-Description: File Transfer");
+		$this->header("Content-type: application/octet-stream");
+		$this->header("Content-Disposition: attachment; filename=\"" . basename( $filename ) . "\"");
+		$this->header("Content-Transfer-Encoding: binary");
+		$this->header("Content-Length: ".filesize( $filename ) );
 	}
 
 }
