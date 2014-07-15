@@ -1,8 +1,9 @@
 <?php
 
 /* GP_Import_Export
- * This plugin adds a "Bulk Import" project action that allows admins to import
- * a zip archive with multiple PO files to different sets
+ * This plugin adds "Bulk Import" and "Bulk Export" project actions
+ *  - Import a zip archive with multiple PO files to different sets
+ *  - Export a zip archive of translations based on filters.
  */
 
 require_once( dirname(__FILE__) .'/includes/router.php' );
