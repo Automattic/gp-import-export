@@ -28,8 +28,8 @@ class GP_Import_Export extends GP_Plugin {
 	}
 
 	function gp_project_actions( $actions, $project ) {
-		$actions[] = gp_link_get( gp_url( '/importer/' . $project->path ), __( 'Bulk Import Translations' ) );
-		$actions[] = gp_link_get( gp_url( '/exporter/' . $project->path ), __( 'Bulk Export Translations' ) );
+		$actions[] = gp_link_get( gp_url( '/importer/' . $project->path ), __( 'Bulk Import' ) );
+		$actions[] = gp_link_get( gp_url( '/exporter/' . $project->path ), __( 'Bulk Export' ) );
 		return $actions;
 	}
 
