@@ -1,4 +1,4 @@
-gp-importer
+gp-import-export
 ===========
 
 ## Description
