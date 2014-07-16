@@ -42,6 +42,13 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$this->die_with_404();
 		}
 
+		$format = gp_array_get( GP::$formats, gp_get( 'format', 'po' ), null );
+
+		if ( ! $format ) {
+			$this->die_with_404();
+		}
+
+
 		if ( isset( GP::$plugins->views ) ) {
 			GP::$plugins->views->set_project_id( $project->id );
 			$current_view = GP::$plugins->views->current_view;
@@ -58,12 +65,6 @@ class GP_Route_Import_export extends GP_Route_Main {
 		}
 
 		mkdir( $working_path );
-
-		$format = gp_array_get( GP::$formats, gp_get( 'format', 'po' ), null );
-
-		if ( ! $format ) {
-			return $this->die_with_404();
-		}
 
 		$translations_sets = gp_get('translation_sets');
 		if ( ! array_filter( $translations_sets ) || in_array( '0', $translations_sets ) ){
