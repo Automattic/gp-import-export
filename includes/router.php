@@ -77,6 +77,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$translation_set = GP::$translation_set->get( $set_id );
 			if ( ! $translation_set ) {
 				$this->errors[] = 'Translation set not found'; //TODO: do something with this
+				continue;
 			}
 			$locale = GP_Locales::by_slug( $translation_set->locale );
 			$filename = $working_path . '/' . sprintf(  '%s-%s.' . $format->extension, str_replace( '/', '-', $project->path ), $locale->slug );
