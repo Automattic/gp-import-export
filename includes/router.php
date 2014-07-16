@@ -29,7 +29,8 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		$values = array_map( function( $set ) { return $set->id; }, $translation_sets );
 		$labels = array_map( function( $set ) { return $set->name_with_locale(); }, $translation_sets );
-		$sets_for_select =  array( '' => __('&mdash; All &mdash;') ) +  array_combine( $values, $labels );
+		$sets_for_select = apply_filters( 'exporter_translations_sets_for_select', array_combine( $values, $labels ) );
+		$sets_for_select =  array( '' => __('&mdash; All &mdash;') ) +  $sets_for_select;
 		$this->tmpl( 'exporter', get_defined_vars() );
 	}
 
@@ -66,7 +67,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		mkdir( $working_path );
 
-		$translations_sets = gp_get('translation_sets');
+		$translations_sets = apply_filters( 'exporter_translations_sets_for_processing', gp_get( 'translation_sets' ) );
 		if ( ! array_filter( $translations_sets ) || in_array( '0', $translations_sets ) ){
 			$_translation_sets = GP::$translation_set->by_project_id( $project->id );
 			$translations_sets = array_map( function( $set ) { return $set->id; }, $_translation_sets );
