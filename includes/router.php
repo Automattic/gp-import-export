@@ -17,13 +17,15 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		if ( isset( GP::$plugins->views ) ) {
 			GP::$plugins->views->set_project_id( $project->id );
-			$views = GP::$plugins->views->views;
-			$views_for_select = array( '' =>  __('&mdash; Select &mdash;' ) );
-			foreach ( $views as $id => $view ) {
-				$views_for_select[$id] = $view->name;
+			if ( $views = GP::$plugins->views->views ) {
+				$views_for_select = array( '' => __( '&mdash; Select &mdash;' ) );
+				foreach ( $views as $id => $view ) {
+					$views_for_select[ $id ] = $view->name;
+				}
+				unset( $views );
 			}
-			unset( $views );
 		}
+
 
 		$translation_sets = GP::$translation_set->by_project_id( $project->id );
 
