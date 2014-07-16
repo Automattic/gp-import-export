@@ -73,6 +73,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$translations_sets = array_map( function( $set ) { return $set->id; }, $_translation_sets );
 		};
 
+		$export_created = false;
 		foreach ( $translations_sets as $set_id ) {
 			$translation_set = GP::$translation_set->get( $set_id );
 			if ( ! $translation_set ) {
@@ -83,6 +84,11 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$filename = $working_path . '/' . sprintf(  '%s-%s.' . $format->extension, str_replace( '/', '-', $project->path ), $locale->slug );
 			$entries = GP::$translation->for_export( $project, $translation_set, gp_get( 'filters' ) );
 			file_put_contents(  $filename, $format->print_exported_file( $project, $locale, $translation_set, $entries ) );
+			$export_created = true;
+		}
+
+		if ( ! $export_created ) {
+			$this->die_with_error( 'Error creating export files' );
 		}
 
 		$archive_name = $slug . '.zip';
