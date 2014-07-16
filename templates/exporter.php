@@ -23,6 +23,7 @@ gp_tmpl_header();
 						'current' => __('Current only'),
 						'old' => __('Approved, but obsoleted by another string'),
 						'waiting' => __('Waiting approval'),
+						'fuzzy' => __('Fuzzy'),
 						'rejected' => __('Rejected'),
 						'untranslated' => __('Without current translation'),
 						'either' => __('Any'),
