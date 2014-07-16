@@ -34,6 +34,8 @@ class GP_Route_Import_export extends GP_Route_Main {
 	}
 
 	function exporter_do_get( $project_path ) {
+		@ini_set('memory_limit', '256M');
+
 		$project = GP::$project->by_path( $project_path );
 
 		if ( ! $project ) {
@@ -42,11 +44,12 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		if ( isset( GP::$plugins->views ) ) {
 			GP::$plugins->views->set_project_id( $project->id );
+			$current_view = GP::$plugins->views->current_view;
 		}
 
-		@ini_set('memory_limit', '256M');
+		$project_for_slug = isset( $current_view ) ? $project_path . '/' . $current_view : $project_path;
+		$slug = str_replace( '/', '-', $project_for_slug ) . '-' . date( 'Y-d-m-Hi' );
 
-		$slug = str_replace( '/', '-', $project_path ) . date( 'Y-d-m-Hi' );
 		$working_path = '/tmp/' . $slug ;
 
 		// Make sure we have a fresh working directory.
