@@ -59,6 +59,10 @@ class GP_Route_Import_export extends GP_Route_Main {
 		}
 
 		$project_for_slug = isset( $current_view ) ? $project_path . '/' . $current_view : $project_path;
+		$filters = gp_get('filters');
+		if ( isset( $filters['status'] ) && $filters['status'] != 'current_or_waiting_or_fuzzy_or_untranslated' ) {
+			$project_for_slug .= '/' . $filters['status'];
+		}
 		$slug = str_replace( '/', '-', $project_for_slug ) . '-' . date( 'Y-d-m-Hi' );
 
 		$working_path = '/tmp/' . $slug ;
