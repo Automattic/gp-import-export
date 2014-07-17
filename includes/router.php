@@ -86,6 +86,9 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$locale = GP_Locales::by_slug( $translation_set->locale );
 			$filename = $working_path . '/' . sprintf(  '%s-%s.' . $format->extension, str_replace( '/', '-', $project_for_slug ), $locale->slug );
 			$entries = GP::$translation->for_export( $project, $translation_set, gp_get( 'filters' ) );
+			if ( empty( $entries ) ) {
+				continue;
+			}
 			file_put_contents(  $filename, $format->print_exported_file( $project, $locale, $translation_set, $entries ) );
 			$export_created = true;
 		}
