@@ -210,7 +210,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 	function confirm_selections( $project ) {
 
 		$working_directory = gp_post( 'working-directory' );
-		$working_path = '/tmp' . $working_directory;
+		$working_path = sys_get_temp_dir() . $working_directory;
 
 		if ( $working_path !== realpath( $working_path ) ) {
 			$this->die_with_error( 'Error.' );
