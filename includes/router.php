@@ -196,7 +196,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 		}
 
 		mkdir( $working_path );
-		system("unzip -qq {$_FILES['import-file']['tmp_name']} *.po -d $working_path && rm {$_FILES['import-file']['tmp_name']} ");
+		system("unzip -j -qq {$_FILES['import-file']['tmp_name']} *.po -d $working_path");
 
 		$pofiles = glob("$working_path/*.po");
 		if ( empty( $pofiles) ) {
@@ -257,7 +257,6 @@ class GP_Route_Import_export extends GP_Route_Main {
 				return 'waiting';
 			});
 		}
-
 
 		$pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
