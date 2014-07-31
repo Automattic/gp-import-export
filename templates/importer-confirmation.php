@@ -28,7 +28,6 @@ gp_tmpl_header();
 					'no' => 'Only import new translations',
 				), 'yes' ); ?>
 			</dd>
-			<dt><input type="submit" value="<?php echo esc_attr( __( 'Import' ) ); ?>"></dt>
 			<dt><?php _e( 'Translation Status' ); ?></dt>
 			<dd>
 				<?php echo gp_radio_buttons( 'status', array(
