@@ -81,6 +81,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 		};
 
 		$export_created = false;
+		$empty = 0;
 		foreach ( $translations_sets as $set_id ) {
 			$translation_set = GP::$translation_set->get( $set_id );
 			if ( ! $translation_set ) {
@@ -91,6 +92,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$filename = $working_path . '/' . sprintf(  '%s-%s.' . $format->extension, str_replace( '/', '-', $project_for_slug ), $locale->slug );
 			$entries = GP::$translation->for_export( $project, $translation_set, gp_get( 'filters' ) );
 			if ( empty( $entries ) ) {
+				$empty++;
 				continue;
 			}
 			file_put_contents(  $filename, $format->print_exported_file( $project, $locale, $translation_set, $entries ) );
@@ -98,7 +100,12 @@ class GP_Route_Import_export extends GP_Route_Main {
 		}
 
 		if ( ! $export_created ) {
-			$this->die_with_error( 'Error creating export files' );
+			if ( count( $translations_sets ) == count( $empty ) ) {
+				$this->notices[] = "No matches for your selection";
+				$this->redirect();
+			} else {
+				$this->die_with_error( 'Error creating export files' );
+			}
 		}
 
 		$archive_name = $slug . '.zip';
@@ -187,6 +194,9 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		$filename = preg_replace("([^\w\s\d\-_~,;:\[\]\(\].]|[\.]{2,})", '',  $_FILES['import-file']['name'] );
 		$slug = preg_replace( '/\.zip$/', '', $filename );
+
+
+
 		$working_directory = '/bulk-importer-' . $slug;
 		$working_path = sys_get_temp_dir() . $working_directory;
 
