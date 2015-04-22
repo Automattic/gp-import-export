@@ -5,6 +5,28 @@ gp_breadcrumb( array(
 	__('Bulk Import')
 ) );
 gp_tmpl_header();
+
+function get_key_to_be_selected( $name_and_id, $options ) {
+	$selected_locale = '';
+
+	foreach( $options as $value => $label ) {
+		$locale = substr( $label, 0, strpos( $label, ' - ' ) );
+
+		// we don't stop after the first match but continue the search because of cases like:
+		// pt-br: br == Breton, but we want Brasilian Portuguese
+		// zh vs. zh-cn vs zh-tw
+		// In general: Take the longest possible match
+
+		if ( strlen( $locale ) > strlen( $selected_locale ) ) {
+			if ( preg_match( "#\b$locale\b#", $name_and_id ) ) {
+				$selected_key = $value;
+				$selected_locale = $locale;
+			}
+		}
+	}
+	return $selected_key;
+}
+
 ?>
 
 	<h2><?php _e('Bulk Import Translations'); ?></h2>
@@ -15,9 +37,10 @@ gp_tmpl_header();
 			<dt><?php _e( 'Select Sets' ); ?></dt>
 			<dd>
 			<?php foreach ( $pofiles as $po ) : ?>
+			<?php $po_name = basename( $po, '.po' ); ?>
 				<p>
-					<label for="<?php echo basename( $po, '.po' ); ?>"><?php echo basename( $po ) ?> &rarr;</label>
-					<?php echo gp_select( basename( $po, '.po' ), $sets_for_select, '' ); //TODO: try and match locale for file name ?>
+					<label for="<?php echo $po_name; ?>"><?php echo basename( $po ) ?> &rarr;</label>
+					<?php echo gp_select( $po_name, $sets_for_select, get_key_to_be_selected( $po_name, $sets_for_select ) ); ?>
 				</p>
 			<?php endforeach; ?>
 			</dd>
