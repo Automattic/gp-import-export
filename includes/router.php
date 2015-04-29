@@ -108,18 +108,14 @@ class GP_Route_Import_export extends GP_Route_Main {
 			}
 		}
 
-		$archive_name = $slug . '.zip';
-		$archive_file =  sys_get_temp_dir() . '/' . $archive_name;
+		$archive_file =  sys_get_temp_dir() . '/' . $slug . '.zip';
 
-		$cwd = getcwd();
 		chdir( sys_get_temp_dir() );
-		$zip_command = "zip -r " . escapeshellarg( $archive_file ) . ' ' . escapeshellarg( $slug );
-		$zip_output = array();
-		$zip_status = null;
-		exec( $zip_command, $zip_output, $zip_status );
-		chdir( $cwd );
-		if ( 0 !== $zip_status ) {
-			//TODO: error
+
+		$zip = new ZipArchiveExtended;
+		if ( $zip->open( $archive_file, ZipArchive::CREATE | ZipArchive::OVERWRITE ) ) {
+			$zip->addDir( $slug );
+			$zip->close();
 		}
 
 		$this->headers_for_download( $archive_file );
@@ -206,7 +202,12 @@ class GP_Route_Import_export extends GP_Route_Main {
 		}
 
 		mkdir( $working_path );
-		system("unzip -j -qq {$_FILES['import-file']['tmp_name']} *.po -d $working_path");
+
+		$zip = new ZipArchiveExtended;
+		if ( $zip->open( $_FILES['import-file']['tmp_name'] ) ) {
+			$zip->extractToFlatten( $working_path );
+			$zip->close();
+		}
 
 		$pofiles = glob("$working_path/*.po");
 		if ( empty( $pofiles) ) {
@@ -311,4 +312,38 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$this->header("Content-Length: ".filesize( $filename ) );
 	}
 
+}
+
+class ZipArchiveExtended extends ZipArchive {
+
+	public function addDir( $path ) {
+	    $this->addEmptyDir( $path );
+	    $nodes = glob( $path . '/*' );
+	    foreach ( $nodes as $node ) {
+	        if ( is_dir( $node ) ) {
+	            $this->addDir( $node );
+	        } else if ( is_file( $node ) )  {
+	            $this->addFile( $node );
+	        }
+	    }
+	}
+
+	public function extractToFlatten( $path ) {
+		for ( $i = 0; $i < $this->numFiles; $i++ ) {
+
+			$entry = $this->getNameIndex( $i );
+			if ( substr( $entry, -1 ) == '/' ) continue; // skip directories to flatten the file structure
+
+			$fp = $this->getStream( $entry );
+			if ( $fp ) {
+				$ofp = fopen( $path . '/' . basename( $entry ), 'w' );
+				while ( ! feof( $fp ) ) {
+					fwrite( $ofp, fread( $fp, 8192 ) );
+				}
+
+				fclose( $fp );
+				fclose( $ofp );
+			}
+		}
+	}
 }
