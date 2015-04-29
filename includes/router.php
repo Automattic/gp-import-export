@@ -151,36 +151,32 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		$step = gp_post( 'importer-step', '1' );
 
+		$pofiles = false;
+		if ( $step === 1 || GP::$plugins->import_export->use_iframe ) {
+			$pofiles = $this->process_archive_file( $project );
+		}
 
 		switch( $step ) {
 			case 1:
 			default:
-				$this->process_archive_file( $project );
+				$this->show_selections( $project, $pofiles );
 				break;
 			case 2:
-				$this->confirm_selections( $project );
+				$this->confirm_selections( $project, $pofiles );
 				break;
 			case 3:
-				$this->process_imports( $project );
+				$this->process_imports( $project, $pofiles );
 				break;
 		}
 
 	}
 
 	/**
-	 * Step 1: extract the uploaded ZIP file
+	 * extract the uploaded ZIP file
 	 * @param  object $project the project derived from the URL
 	 * @return array           the filenames of the extracted .po files
 	 */
 	function process_archive_file( $project ) {
-		$sets = GP::$translation_set->by_project_id( $project->id );
-		$sets_for_select = array_combine(
-			array_map( function( $s ){ return $s->id; }, $sets ),
-			array_map( function( $s ){ return $s->locale . ' - ' . $s->name; }, $sets )
-		);
-
-		$sets_for_select = array( '0' => __('&mdash; Translation Set &mdash;' ) ) + $sets_for_select;
-		unset( $sets );
 
 		if ( ! is_uploaded_file( $_FILES['import-file']['tmp_name'] ) ) {
 			$this->redirect_with_error( __( 'Error uploading the file.' ) );
@@ -212,19 +208,39 @@ class GP_Route_Import_export extends GP_Route_Main {
 		}
 
 		$pofiles = glob("$working_path/*.po");
-		if ( empty( $pofiles) ) {
+		if ( empty( $pofiles ) ) {
 			GP_Import_Export::rrmdir( $working_path );
 			$this->redirect_with_error( __( 'No PO files found in zip archive' ) );
 		}
 
+		return $pofiles;
+	}
+
+	/**
+	 * Step 1: extract the uploaded ZIP file
+	 * @param  object $project the project derived from the URL
+	 * @param  array $pofiles the filenames of the extracted .po files
+	 */
+	function show_selections( $project, $pofiles ) {
+		$sets = GP::$translation_set->by_project_id( $project->id );
+		$sets_for_select = array_combine(
+			array_map( function( $s ){ return $s->id; }, $sets ),
+			array_map( function( $s ){ return $s->locale . ' - ' . $s->name; }, $sets )
+		);
+
+		$sets_for_select = array( '0' => __('&mdash; Translation Set &mdash;' ) ) + $sets_for_select;
+		unset( $sets );
+
 		$this->tmpl( 'importer-files', get_defined_vars() );
 	}
+
 
 	/**
 	 * Step 2: Confirm the locale mappings by the user and select
 	 * @param  object $project the project derived from the URL
+	 * @param  array $pofiles the filenames of the extracted .po files
 	 */
-	function confirm_selections( $project ) {
+	function confirm_selections( $project, $pofiles ) {
 
 		$working_directory = gp_post( 'working-directory' );
 		$working_path = sys_get_temp_dir() . $working_directory;
@@ -234,7 +250,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 		}
 
 		$to_import = array();
-		$pofiles = glob( "$working_path/*.po" );
+		if ( ! $pofiles ) $pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
 			if ( $target_set  ) {
@@ -259,9 +275,10 @@ class GP_Route_Import_export extends GP_Route_Main {
 	/**
 	 * Step 3: Do the import
 	 * @param  object $project the project derived from the URL
+	 * @param  array $pofiles the filenames of the extracted .po files
 	 */
 
-	function process_imports( $project ) {
+	function process_imports( $project, $pofiles ) {
 
 		$working_directory = gp_post( 'working-directory' );
 		$working_path = '/tmp' . $working_directory;
@@ -280,7 +297,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 			});
 		}
 
-		$pofiles = glob( "$working_path/*.po" );
+		if ( ! $pofiles ) $pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
 			if ( $target_set  ) {
