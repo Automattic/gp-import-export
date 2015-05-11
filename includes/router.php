@@ -176,7 +176,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$sets = GP::$translation_set->by_project_id( $project->id );
 		$sets_for_select = array_combine(
 			array_map( function( $s ){ return $s->id; }, $sets ),
-			array_map( function( $s ){ return $s->name; }, $sets )
+			array_map( function( $s ){ return $s->locale . ' - ' . $s->name; }, $sets )
 		);
 
 		$sets_for_select = array( '0' => __('&mdash; Translation Set &mdash;' ) ) + $sets_for_select;
