@@ -61,8 +61,49 @@ gp_tmpl_header();
 				echo gp_select( 'export-format', $format_options, 'po' );
 				?>
 			</dd>
+			<dt><label><?php _e( 'Translations added between:' ); ?></label></dt>
+			<dd>
+			<?php /* translators: %1$s: from date, %2$s: to date */ printf( __( '%1$s - %2$s' ), '<input type="date" name="filters[before_date_added]" placeholder="YYYY-MM-DD"/>', '<input type="date" name="filters[after_date_added]" placeholder="YYYY-MM-DD" />' ); ?>
+				<a href="" id="last-month"><?php _e( 'last month' ); ?></a>
+				<a href="" id="clear-dates"><?php _e( 'clear' ); ?></a>
+			</dd>
 		</dl>
 		<p><input type="submit" value="<?php echo esc_attr( __( 'Export' ) ); ?>" name="export" /></p>
 	</form>
+
+	<script type="text/javascript">
+	jQuery( '#last-month' ).on( 'click', function() {
+		var d = new Date;
+		d.setDate( 1 );
+		d.setMonth( d.getMonth() - 1 );
+		jQuery( 'input[name=filters\\[before_date_added\\]]' ).val( getMySQLDate( d ) );
+		d = new Date;
+		d.setDate( 0 );
+		jQuery( 'input[name=filters\\[after_date_added\\]]' ).val( getMySQLDate( d ) );
+		return false;
+	});
+
+	jQuery( '#clear-dates' ).on( 'click', function() {
+		jQuery( 'input[name=filters\\[before_date_added\\]], input[name=filters\\[after_date_added\\]]' ).val( '' );
+		return false;
+	});
+
+	function getMySQLDate( date ) {
+		var day = date.getDate(),
+			month = date.getMonth() + 1,
+			year = date.getYear();
+
+		if ( year < 2000 ) {
+			year += 1900;
+		}
+		if ( month < 10 ) {
+			month = '0' + String( month );
+		}
+		if ( day < 10 ) {
+			day = '0' + String( day );
+		}
+		return year + '-' + month + '-' + day;
+	}
+	</script>
 
 <?php gp_tmpl_footer();
