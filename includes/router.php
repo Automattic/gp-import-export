@@ -108,13 +108,12 @@ class GP_Route_Import_export extends GP_Route_Main {
 			}
 		}
 
-		$archive_file =  sys_get_temp_dir() . '/' . $slug . '.zip';
-
-		chdir( sys_get_temp_dir() );
+		$tempdir = sys_get_temp_dir();
+		$archive_file =  $tempdir . '/' . $slug . '.zip';
 
 		$zip = new ZipArchiveExtended;
 		if ( $zip->open( $archive_file, ZipArchive::CREATE | ZipArchive::OVERWRITE ) ) {
-			$zip->addDir( $slug );
+			$zip->addDir( $slug, $tempdir );
 			$zip->close();
 		}
 
@@ -314,36 +313,80 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 }
 
-class ZipArchiveExtended extends ZipArchive {
+if ( class_exists( 'ZipArchive' ) ) {
+	class ZipArchiveExtended extends ZipArchive {
 
-	public function addDir( $path ) {
-	    $this->addEmptyDir( $path );
-	    $nodes = glob( $path . '/*' );
-	    foreach ( $nodes as $node ) {
-	        if ( is_dir( $node ) ) {
-	            $this->addDir( $node );
-	        } else if ( is_file( $node ) )  {
-	            $this->addFile( $node );
-	        }
-	    }
-	}
+		public function addDir( $path, $basedir ) {
+			$cwd = getcwd();
+			chdir( $basedir );
 
-	public function extractToFlatten( $path ) {
-		for ( $i = 0; $i < $this->numFiles; $i++ ) {
-
-			$entry = $this->getNameIndex( $i );
-			if ( substr( $entry, -1 ) == '/' ) continue; // skip directories to flatten the file structure
-
-			$fp = $this->getStream( $entry );
-			if ( $fp ) {
-				$ofp = fopen( $path . '/' . basename( $entry ), 'w' );
-				while ( ! feof( $fp ) ) {
-					fwrite( $ofp, fread( $fp, 8192 ) );
+			$this->addEmptyDir( $path );
+			$nodes = glob( $path . '/*' );
+			foreach ( $nodes as $node ) {
+				if ( is_dir( $node ) ) {
+					$this->addDir( $node );
+				} else if ( is_file( $node ) )  {
+					$this->addFile( $node );
 				}
-
-				fclose( $fp );
-				fclose( $ofp );
 			}
+
+			chdir( $cwd );
+			return true;
 		}
+
+		public function extractToFlatten( $path ) {
+			for ( $i = 0; $i < $this->numFiles; $i++ ) {
+
+				$entry = $this->getNameIndex( $i );
+				if ( substr( $entry, -1 ) == '/' ) continue; // skip directories to flatten the file structure
+
+				$fp = $this->getStream( $entry );
+				if ( $fp ) {
+					$ofp = fopen( $path . '/' . basename( $entry ), 'w' );
+					while ( ! feof( $fp ) ) {
+						fwrite( $ofp, fread( $fp, 8192 ) );
+					}
+
+					fclose( $fp );
+					fclose( $ofp );
+				}
+			}
+
+			return $path;
+		}
+	}
+} else {
+	class ZipArchiveExtended {
+		private $archive_file;
+		public function open( $archive_file, $flags = false ) {
+			$this->archive_file = $archive_file;
+			return true;
+		}
+
+		public function addDir( $path, $basedir ) {
+			$cwd = getcwd();
+			chdir( $basedir );
+
+			$zip_command = 'zip -r ' . escapeshellarg( $this->archive_file ) . ' ' . escapeshellarg( $path );
+			$zip_output = array();
+			$zip_status = null;
+
+			exec( $zip_command, $zip_output, $zip_status );
+
+			if ( 0 !== $zip_status ) {
+				return false;
+			}
+
+			return true;
+		}
+
+		public function extractToFlatten( $path ) {
+			system( 'unzip -j -qq ' . $this->archive_file . ' *.po -d ' . escapeshellarg( $path ) );
+			return $path;
+		}
+
+		public function close() {
+		}
+
 	}
 }
