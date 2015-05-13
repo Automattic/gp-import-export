@@ -152,7 +152,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$step = gp_post( 'importer-step', '1' );
 
 		$pofiles = false;
-		if ( $step === 1 || GP::$plugins->import_export->use_iframe ) {
+		if ( $step === 1 || gp_post( 'use-iframe' ) ) {
 			$pofiles = $this->process_archive_file( $project );
 		}
 

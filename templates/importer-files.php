@@ -48,7 +48,7 @@ function get_key_to_be_selected( $name_and_id, $options ) {
 		</dl>
 	</form>
 
-	<?php if ( GP::$plugins->import_export->use_iframe ): ?>
+	<?php if ( gp_post( 'use-iframe' ) ): ?>
 		<script type="text/javascript">
 			parent.document.getElementById('step1').style.display = 'none';
 			parent.document.getElementById('step2').innerHTML = document.getElementById('step2').innerHTML;

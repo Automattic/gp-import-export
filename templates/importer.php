@@ -8,12 +8,14 @@ gp_tmpl_header();
 ?>
 
 	<h2><?php _e('Bulk Import Translations'); ?></h2>
-	<form action="" method="post" enctype="multipart/form-data"<?php if ( GP::$plugins->import_export->use_iframe ) echo ' target="tempframe"'; ?> id="step1form">
+	<form action="" method="post" enctype="multipart/form-data" id="step1form">
 		<div id="inner-error" class="error" style="display: none"></div>
 		<input type="hidden" name="importer-step" value="1">
 		<dl id="step1">
 			<dt><label for="import-file"><?php _e( 'Import File:' ); ?></label></dt>
 			<dd><input type="file" name="import-file" id="import-file" /></dd>
+			<dt><?php _e( 'Advanced' ); ?></dt>
+			<dd><label><input type="checkbox" name="use-iframe" value="1" id="use-iframe-checkbox" <?php if ( gp_post( 'use-iframe' ) ) echo ' checked="checked"'; ?>/> <?php _e( 'Re-submit file on every step' ); ?></label></dd>
 			<dt><input type="submit" value="<?php echo esc_attr( __( 'Import' ) ); ?>"></dt>
 		</dl>
 		<dl id="step2">
@@ -22,20 +24,45 @@ gp_tmpl_header();
 		</dl>
 	</form>
 
-	<?php if ( GP::$plugins->import_export->use_iframe ): ?>
-		<iframe name="tempframe" width="200" height="200" style="display: none"></iframe>
-		<script type="text/javascript">
-		setInterval( function() {
-			var error = tempframe.jQuery('.error');
-			if ( error.length > 0 ) {
-				jQuery('#inner-error').html( error.html() ).show();
-				jQuery('html, body').animate({
-				    scrollTop: jQuery("#inner-error").offset().top
-				}, 200);
+	<div id="tempframe-holder" style="display: none"></div>
+
+	<script type="text/javascript">
+	var updateErrorsInterval;
+	jQuery( function() {
+		if ( jQuery( '#use-iframe-checkbox' ).is( ':checked' ) ) {
+			enableIframe();
+		}
+		jQuery( '#use-iframe-checkbox' ).on( 'change', function() {
+			if ( this.checked ) {
+				enableIframe();
 			} else {
-				jQuery('#inner-error').hide();
+				disableIframe();
 			}
-		}, 1000); </script>
-	<?php endif; ?>
+		});
+	} );
+	function enableIframe() {
+		jQuery( '#tempframe-holder' ).html( '<iframe name="tempframe"></iframe>' );
+		jQuery( '#step1form' ).attr( 'target', 'tempframe' );
+		updateErrorsInterval = setInterval( updateErrors, 1000 );
+	}
+	function disableIframe() {
+		jQuery( '#step1form' ).attr( 'target', null );
+		clearInterval( updateErrorsInterval );
+	}
+	function updateErrors() {
+		if ( typeof window.tempframe === 'undefined' || typeof window.tempframe.jQuery === 'undefined' ) {
+			return false;
+		}
+		var error = window.tempframe.jQuery('.error');
+		if ( error.length > 0 ) {
+			jQuery('#inner-error').html( error.html() ).show();
+			jQuery('html, body').animate({
+			    scrollTop: jQuery("#inner-error").offset().top
+			}, 200);
+		} else {
+			jQuery('#inner-error').hide();
+		}
+	}
+	</script>
 
 <?php gp_tmpl_footer();
