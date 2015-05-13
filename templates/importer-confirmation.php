@@ -39,7 +39,7 @@ gp_tmpl_header();
 		</dl>
 	</form>
 
-	<?php if ( GP::$plugins->import_export->use_iframe ): ?>
+	<?php if ( gp_post( 'use-iframe' ) ): ?>
 		<script type="text/javascript">
 			parent.document.getElementById('step2').style.display = 'none';
 			parent.document.getElementById('step3').innerHTML = document.getElementById('step3').innerHTML;

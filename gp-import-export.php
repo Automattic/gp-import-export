@@ -11,7 +11,6 @@ require_once( dirname(__FILE__) .'/includes/router.php' );
 class GP_Import_Export extends GP_Plugin {
 
 	public $id = 'importer';
-	public $use_iframe = true;
 
 	public function __construct() {
 		parent::__construct();
