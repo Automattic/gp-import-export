@@ -210,6 +210,16 @@ var updatePredefs = function() {
 // Run when document is ready
 jQuery( updatePredefs );
 
+function decodeUriIfNecessary( str ) {
+	if ( str.match( /%[0-9a-fA-F]{2}/ ) ) {
+		try {
+			return decodeURIComponent( str );
+		} catch (e) {
+			return str;
+		}
+	}
+	return str;
+}
 jQuery.unserialize = function( str ) {
 	var arr, i, parts,
 		items = str.split( '&' ),
@@ -219,16 +229,16 @@ jQuery.unserialize = function( str ) {
 
 	for ( i = 0; i < items.length; i++ ) {
 		parts = items[ i ].split( /=/ );
-		if ( parts[ 0 ].substr( -6 ) === "%5B%5D" ) {
+		if ( parts[ 0 ].substr( -6 ) === '%5B%5D' ) {
 			// Process arrays without a key
-			index = parts[ 0 ].substr( 0, -6 );
+			index = decodeUriIfNecessary( parts[ 0 ].substr( 0, parts[ 0 ].length - 6 ) );
 			if ( arrays[ index ] === undefined ) {
 				arrays[ index ] = [];
 			}
-			arrays[ index ].push( decodeURIComponent( parts[ 1 ].replace( /\+/g, " " ) ) );
+			arrays[ index ].push( decodeUriIfNecessary( parts[ 1 ].replace( /\+/g, " " ) ) );
 		} else {
 			if ( parts.length > 1 ) {
-				ret += "\"" + parts[ 0 ] + "\": \"" + decodeURIComponent( parts[ 1 ].replace( /\+/g, " " ) ).replace( /\n/g, "\\n" ).replace( /\r/g, "\\r" ) + "\", ";
+				ret += "\"" + decodeUriIfNecessary( parts[ 0 ] ) + "\": \"" + decodeUriIfNecessary( parts[ 1 ].replace( /\+/g, " " ) ).replace( /\n/g, "\\n" ).replace( /\r/g, "\\r" ) + "\", ";
 			}
 		}
 	}
@@ -252,7 +262,7 @@ jQuery.fn.unserialize = function( param ) {
 			if ( parts[ 1 ] instanceof Array ) {
 				for ( i in parts[ 1 ] ) {
 					val = "" + parts[ 1 ][ i ];
-					if ( item.val() == decodeURIComponent( val.replace( /\+/g, " " ) ) ) {
+					if ( item.val() == decodeUriIfNecessary( val.replace( /\+/g, " " ) ) ) {
 						item.prop( "checked", true );
 					} else {
 						if ( jQuery.inArray( item.val(), parts[ 1 ] ) < 0 ) {
@@ -262,7 +272,7 @@ jQuery.fn.unserialize = function( param ) {
 				}
 			} else {
 				val = "" + parts[ 1 ];
-				if ( item.val() == decodeURIComponent( val.replace( /\+/g, " " ) ) ) {
+				if ( item.val() == decodeUriIfNecessary( val.replace( /\+/g, " " ) ) ) {
 					item.prop( "checked", true );
 				} else {
 					item.prop( "checked", false );
@@ -272,7 +282,7 @@ jQuery.fn.unserialize = function( param ) {
 
 	for ( i in items ) {
 		parts = ( items instanceof Array ) ? items[ i ].split( /=/ ) : [ i, ( items[ i ] instanceof Array ) ? items[ i ] : "" + items[ i ] ];
-		parts[ 0 ] = decodeURIComponent( parts[ 0 ] );
+		parts[ 0 ] = decodeUriIfNecessary( parts[ 0 ] );
 
 		if ( parts[ 0 ].indexOf( "[]" ) == -1 && parts[ 1 ] instanceof Array ) {
 			parts[ 0 ] += "[]";
@@ -296,7 +306,7 @@ jQuery.fn.unserialize = function( param ) {
 			// when the value is an object, we set the value to ""
 			val = ( ( typeof val == "object" ) || ( typeof val == "undefined" ) ) ? "" : val;
 
-			obj.val( decodeURIComponent( val.replace( /\+/g, " " ) ) );
+			obj.val( decodeUriIfNecessary( val.replace( /\+/g, " " ) ) );
 		}
 	}
 	return this;
