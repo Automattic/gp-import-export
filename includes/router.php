@@ -112,7 +112,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$archive_file =  $tempdir . '/' . $slug . '.zip';
 
 		$zip = new ZipArchiveExtended;
-		if ( $zip->open( $archive_file, ZipArchive::CREATE | ZipArchive::OVERWRITE ) ) {
+		if ( $zip->open( $archive_file, ZipArchiveExtended::CREATE | ZipArchiveExtended::OVERWRITE ) ) {
 			$zip->addDir( $slug, $tempdir );
 			$zip->close();
 		}
@@ -357,6 +357,9 @@ if ( class_exists( 'ZipArchive' ) ) {
 	}
 } else {
 	class ZipArchiveExtended {
+		const CREATE = 0;
+		const OVERWRITE = 0;
+
 		private $archive_file;
 		public function open( $archive_file, $flags = false ) {
 			$this->archive_file = $archive_file;
