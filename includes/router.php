@@ -108,18 +108,13 @@ class GP_Route_Import_export extends GP_Route_Main {
 			}
 		}
 
-		$archive_name = $slug . '.zip';
-		$archive_file =  sys_get_temp_dir() . '/' . $archive_name;
+		$tempdir = sys_get_temp_dir();
+		$archive_file =  $tempdir . '/' . $slug . '.zip';
 
-		$cwd = getcwd();
-		chdir( sys_get_temp_dir() );
-		$zip_command = "zip -r " . escapeshellarg( $archive_file ) . ' ' . escapeshellarg( $slug );
-		$zip_output = array();
-		$zip_status = null;
-		exec( $zip_command, $zip_output, $zip_status );
-		chdir( $cwd );
-		if ( 0 !== $zip_status ) {
-			//TODO: error
+		$zip = new ZipArchiveExtended;
+		if ( $zip->open( $archive_file, ZipArchiveExtended::CREATE | ZipArchiveExtended::OVERWRITE ) ) {
+			$zip->addDir( $slug, $tempdir );
+			$zip->close();
 		}
 
 		$this->headers_for_download( $archive_file );
@@ -206,7 +201,12 @@ class GP_Route_Import_export extends GP_Route_Main {
 		}
 
 		mkdir( $working_path );
-		system("unzip -j -qq {$_FILES['import-file']['tmp_name']} *.po -d $working_path");
+
+		$zip = new ZipArchiveExtended;
+		if ( $zip->open( $_FILES['import-file']['tmp_name'] ) ) {
+			$zip->extractToFlatten( $working_path );
+			$zip->close();
+		}
 
 		$pofiles = glob("$working_path/*.po");
 		if ( empty( $pofiles) ) {
@@ -311,4 +311,85 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$this->header("Content-Length: ".filesize( $filename ) );
 	}
 
+}
+
+if ( class_exists( 'ZipArchive' ) ) {
+	class ZipArchiveExtended extends ZipArchive {
+
+		public function addDir( $path, $basedir ) {
+			$cwd = getcwd();
+			chdir( $basedir );
+
+			$this->addEmptyDir( $path );
+			$nodes = glob( $path . '/*' );
+			foreach ( $nodes as $node ) {
+				if ( is_dir( $node ) ) {
+					$this->addDir( $node );
+				} else if ( is_file( $node ) )  {
+					$this->addFile( $node );
+				}
+			}
+
+			chdir( $cwd );
+			return true;
+		}
+
+		public function extractToFlatten( $path ) {
+			for ( $i = 0; $i < $this->numFiles; $i++ ) {
+
+				$entry = $this->getNameIndex( $i );
+				if ( substr( $entry, -1 ) == '/' ) continue; // skip directories to flatten the file structure
+
+				$fp = $this->getStream( $entry );
+				if ( $fp ) {
+					$ofp = fopen( $path . '/' . basename( $entry ), 'w' );
+					while ( ! feof( $fp ) ) {
+						fwrite( $ofp, fread( $fp, 8192 ) );
+					}
+
+					fclose( $fp );
+					fclose( $ofp );
+				}
+			}
+
+			return $path;
+		}
+	}
+} else {
+	class ZipArchiveExtended {
+		const CREATE = 0;
+		const OVERWRITE = 0;
+
+		private $archive_file;
+		public function open( $archive_file, $flags = false ) {
+			$this->archive_file = $archive_file;
+			return true;
+		}
+
+		public function addDir( $path, $basedir ) {
+			$cwd = getcwd();
+			chdir( $basedir );
+
+			$zip_command = 'zip -r ' . escapeshellarg( $this->archive_file ) . ' ' . escapeshellarg( $path );
+			$zip_output = array();
+			$zip_status = null;
+
+			exec( $zip_command, $zip_output, $zip_status );
+
+			if ( 0 !== $zip_status ) {
+				return false;
+			}
+
+			return true;
+		}
+
+		public function extractToFlatten( $path ) {
+			system( 'unzip -j -qq ' . $this->archive_file . ' *.po -d ' . escapeshellarg( $path ) );
+			return $path;
+		}
+
+		public function close() {
+		}
+
+	}
 }
