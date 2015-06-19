@@ -167,6 +167,11 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 	}
 
+	/**
+	 * Step 1: extract the uploaded ZIP file
+	 * @param  object $project the project derived from the URL
+	 * @return array           the filenames of the extracted .po files
+	 */
 	function process_archive_file( $project ) {
 		$sets = GP::$translation_set->by_project_id( $project->id );
 		$sets_for_select = array_combine(
@@ -189,8 +194,6 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		$filename = preg_replace("([^\w\s\d\-_~,;:\[\]\(\].]|[\.]{2,})", '',  $_FILES['import-file']['name'] );
 		$slug = preg_replace( '/\.zip$/', '', $filename );
-
-
 
 		$working_directory = '/bulk-importer-' . $slug;
 		$working_path = sys_get_temp_dir() . $working_directory;
@@ -217,6 +220,10 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$this->tmpl( 'importer-files', get_defined_vars() );
 	}
 
+	/**
+	 * Step 2: Confirm the locale mappings by the user and select
+	 * @param  object $project the project derived from the URL
+	 */
 	function confirm_selections( $project ) {
 
 		$working_directory = gp_post( 'working-directory' );
@@ -248,6 +255,11 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		$this->tmpl( 'importer-confirmation', get_defined_vars() );
 	}
+
+	/**
+	 * Step 3: Do the import
+	 * @param  object $project the project derived from the URL
+	 */
 
 	function process_imports( $project ) {
 
