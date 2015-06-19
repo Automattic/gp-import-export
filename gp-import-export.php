@@ -35,9 +35,14 @@ class GP_Import_Export extends GP_Plugin {
 	}
 
 	public static function rrmdir( $dir ) {
-		foreach ( glob( $dir . '/{,.}*', GLOB_BRACE ) as $file ) { // Also look for hidden files
+		if ( trim( str_replace( array( '/', '.' ), '', $dir) ) == '' ) {
+			// prevent empty argument, thus deleting more than wanted
+			return false;
+		}
 
-			if (  $file ==  $dir . '/.' || $file == $dir . '/..' ) { // but ignore dot directories
+		foreach ( glob( str_replace( '*', '', $dir ) . '/{,.}*', GLOB_BRACE ) as $file ) { // Also look for hidden files
+
+			if (  $file == $dir . '/.' || $file == $dir . '/..' ) { // but ignore dot directories
 				continue;
 			}
 
