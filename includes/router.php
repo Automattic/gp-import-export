@@ -151,23 +151,25 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		$step = gp_post( 'importer-step', '1' );
 
+		// process the archive file upon each step because it is uploaded on every step because of the server-farm infrastructure
+		$pofiles = $this->process_archive_file( $project );
 
 		switch( $step ) {
 			case 1:
 			default:
-				$this->process_archive_file( $project );
+				$this->show_selections( $project, $pofiles );
 				break;
 			case 2:
-				$this->confirm_selections( $project );
+				$this->confirm_selections( $project, $pofiles );
 				break;
 			case 3:
-				$this->process_imports( $project );
+				$this->process_imports( $project, $pofiles );
 				break;
 		}
 
 	}
 
-	function process_archive_file( $project ) {
+	function show_selections( $project, $pofiles ) {
 		$sets = GP::$translation_set->by_project_id( $project->id );
 		$sets_for_select = array_combine(
 			array_map( function( $s ){ return $s->id; }, $sets ),
@@ -176,6 +178,11 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		$sets_for_select = array( '0' => __('&mdash; Translation Set &mdash;' ) ) + $sets_for_select;
 		unset( $sets );
+
+		$this->tmpl( 'importer-files', get_defined_vars() );
+	}
+
+	function process_archive_file( $project ) {
 
 		if ( ! is_uploaded_file( $_FILES['import-file']['tmp_name'] ) ) {
 			$this->redirect_with_error( __( 'Error uploading the file.' ) );
@@ -190,44 +197,34 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$filename = preg_replace("([^\w\s\d\-_~,;:\[\]\(\].]|[\.]{2,})", '',  $_FILES['import-file']['name'] );
 		$slug = preg_replace( '/\.zip$/', '', $filename );
 
-
-
 		$working_directory = '/bulk-importer-' . $slug;
-		$working_path = sys_get_temp_dir() . $working_directory;
+		$this->working_path = sys_get_temp_dir() . $working_directory;
 
 		// Make sure we have a fresh working directory.
-		if ( file_exists( $working_path ) ) {
-			GP_Import_Export::rrmdir( $working_path );
+		if ( file_exists( $this->working_path ) ) {
+			GP_Import_Export::rrmdir( $this->working_path );
 		}
 
-		mkdir( $working_path );
+		mkdir( $this->working_path );
 
 		$zip = new ZipArchiveExtended;
 		if ( $zip->open( $_FILES['import-file']['tmp_name'] ) ) {
-			$zip->extractToFlatten( $working_path );
+			$zip->extractToFlatten( $this->working_path );
 			$zip->close();
 		}
 
-		$pofiles = glob("$working_path/*.po");
-		if ( empty( $pofiles) ) {
-			GP_Import_Export::rrmdir( $working_path );
+		$pofiles = glob( $this->working_path . '/*.po' );
+		if ( empty( $pofiles ) ) {
+			GP_Import_Export::rrmdir( $this->working_path );
 			$this->redirect_with_error( __( 'No PO files found in zip archive' ) );
 		}
 
-		$this->tmpl( 'importer-files', get_defined_vars() );
+		return $pofiles;
 	}
 
-	function confirm_selections( $project ) {
-
-		$working_directory = gp_post( 'working-directory' );
-		$working_path = sys_get_temp_dir() . $working_directory;
-
-		if ( $working_path !== realpath( $working_path ) ) {
-			$this->die_with_error( 'Error.' );
-		}
+	function confirm_selections( $project, $pofiles = false ) {
 
 		$to_import = array();
-		$pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
 			if ( $target_set  ) {
@@ -249,14 +246,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$this->tmpl( 'importer-confirmation', get_defined_vars() );
 	}
 
-	function process_imports( $project ) {
-
-		$working_directory = gp_post( 'working-directory' );
-		$working_path = '/tmp' . $working_directory;
-
-		if ( $working_path !== realpath( $working_path ) ) {
-			$this->die_with_error( 'Error.' );
-		}
+	function process_imports( $project, $pofiles = false ) {
 
 		if ( 'no' == gp_post( 'overwrite', 'yes' ) ) {
 			add_filter( 'translation_set_import_over_existing', '__return_false' );
@@ -268,7 +258,6 @@ class GP_Route_Import_export extends GP_Route_Main {
 			});
 		}
 
-		$pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
 			if ( $target_set  ) {
@@ -292,8 +281,10 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$this->notices = array( implode('<br>', $this->notices ) );
 		$this->errors = array( implode('<br>', $this->errors ) );
 
-		//cleanup
-		GP_Import_Export::rrmdir( $working_path );
+		// cleanup
+		if ( $this->working_path ) {
+			GP_Import_Export::rrmdir( $this->working_path );
+		}
 
 		$this->redirect();
 	}
