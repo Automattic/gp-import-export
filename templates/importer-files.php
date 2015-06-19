@@ -32,7 +32,6 @@ function get_key_to_be_selected( $name_and_id, $options ) {
 	<h2><?php _e('Bulk Import Translations'); ?></h2>
 	<form action="" method="post" enctype="multipart/form-data" id="step2">
 		<input type="hidden" name="importer-step" value="2">
-		<input type="hidden" name="working-directory" value="<?php echo esc_attr( $working_directory );?>">
 		<dl>
 			<dt><?php _e( 'Select Sets' ); ?></dt>
 			<dd>
@@ -48,11 +47,9 @@ function get_key_to_be_selected( $name_and_id, $options ) {
 		</dl>
 	</form>
 
-	<?php if ( gp_post( 'use-iframe' ) ): ?>
-		<script type="text/javascript">
-			parent.document.getElementById('step1').style.display = 'none';
-			parent.document.getElementById('step2').innerHTML = document.getElementById('step2').innerHTML;
-		</script>
-	<?php endif; ?>
+	<script type="text/javascript">
+		parent.document.getElementById('step1').style.display = 'none';
+		parent.document.getElementById('step2').innerHTML = document.getElementById('step2').innerHTML;
+	</script>
 
 <?php gp_tmpl_footer();

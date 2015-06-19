@@ -151,10 +151,8 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		$step = gp_post( 'importer-step', '1' );
 
-		$pofiles = false;
-		if ( $step === 1 || gp_post( 'use-iframe' ) ) {
-			$pofiles = $this->process_archive_file( $project );
-		}
+		// process the archive file upon each step because it is uploaded on every step because of the server-farm infrastructure
+		$pofiles = $this->process_archive_file( $project );
 
 		switch( $step ) {
 			case 1:
@@ -200,24 +198,24 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$slug = preg_replace( '/\.zip$/', '', $filename );
 
 		$working_directory = '/bulk-importer-' . $slug;
-		$working_path = sys_get_temp_dir() . $working_directory;
+		$this->working_path = sys_get_temp_dir() . $working_directory;
 
 		// Make sure we have a fresh working directory.
-		if ( file_exists( $working_path ) ) {
-			GP_Import_Export::rrmdir( $working_path );
+		if ( file_exists( $this->working_path ) ) {
+			GP_Import_Export::rrmdir( $this->working_path );
 		}
 
-		mkdir( $working_path );
+		mkdir( $this->working_path );
 
 		$zip = new ZipArchiveExtended;
 		if ( $zip->open( $_FILES['import-file']['tmp_name'] ) ) {
-			$zip->extractToFlatten( $working_path );
+			$zip->extractToFlatten( $this->working_path );
 			$zip->close();
 		}
 
-		$pofiles = glob("$working_path/*.po");
+		$pofiles = glob( $this->working_path . '/*.po' );
 		if ( empty( $pofiles ) ) {
-			GP_Import_Export::rrmdir( $working_path );
+			GP_Import_Export::rrmdir( $this->working_path );
 			$this->redirect_with_error( __( 'No PO files found in zip archive' ) );
 		}
 
@@ -226,15 +224,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 	function confirm_selections( $project, $pofiles = false ) {
 
-		$working_directory = gp_post( 'working-directory' );
-		$working_path = sys_get_temp_dir() . $working_directory;
-
-		if ( $working_path !== realpath( $working_path ) ) {
-			$this->die_with_error( 'Error.' );
-		}
-
 		$to_import = array();
-		if ( ! $pofiles ) $pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
 			if ( $target_set  ) {
@@ -258,13 +248,6 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 	function process_imports( $project, $pofiles = false ) {
 
-		$working_directory = gp_post( 'working-directory' );
-		$working_path = '/tmp' . $working_directory;
-
-		if ( $working_path !== realpath( $working_path ) ) {
-			$this->die_with_error( 'Error.' );
-		}
-
 		if ( 'no' == gp_post( 'overwrite', 'yes' ) ) {
 			add_filter( 'translation_set_import_over_existing', '__return_false' );
 		}
@@ -275,7 +258,6 @@ class GP_Route_Import_export extends GP_Route_Main {
 			});
 		}
 
-		if ( ! $pofiles ) $pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
 			if ( $target_set  ) {
@@ -299,8 +281,10 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$this->notices = array( implode('<br>', $this->notices ) );
 		$this->errors = array( implode('<br>', $this->errors ) );
 
-		//cleanup
-		GP_Import_Export::rrmdir( $working_path );
+		// cleanup
+		if ( $this->working_path ) {
+			GP_Import_Export::rrmdir( $this->working_path );
+		}
 
 		$this->redirect();
 	}

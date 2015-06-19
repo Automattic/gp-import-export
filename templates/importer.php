@@ -14,8 +14,6 @@ gp_tmpl_header();
 		<dl id="step1">
 			<dt><label for="import-file"><?php _e( 'Import File:' ); ?></label></dt>
 			<dd><input type="file" name="import-file" id="import-file" /></dd>
-			<dt><?php _e( 'Advanced' ); ?></dt>
-			<dd><label><input type="checkbox" name="use-iframe" value="1" id="use-iframe-checkbox" <?php if ( gp_post( 'use-iframe' ) ) echo ' checked="checked"'; ?>/> <?php _e( 'Re-submit file on every step' ); ?></label></dd>
 			<dt><input type="submit" value="<?php echo esc_attr( __( 'Import' ) ); ?>"></dt>
 		</dl>
 		<dl id="step2">
@@ -29,26 +27,10 @@ gp_tmpl_header();
 	<script type="text/javascript">
 	var updateErrorsInterval;
 	jQuery( function() {
-		if ( jQuery( '#use-iframe-checkbox' ).is( ':checked' ) ) {
-			enableIframe();
-		}
-		jQuery( '#use-iframe-checkbox' ).on( 'change', function() {
-			if ( this.checked ) {
-				enableIframe();
-			} else {
-				disableIframe();
-			}
-		});
-	} );
-	function enableIframe() {
 		jQuery( '#tempframe-holder' ).html( '<iframe name="tempframe"></iframe>' );
 		jQuery( '#step1form' ).attr( 'target', 'tempframe' );
 		updateErrorsInterval = setInterval( updateErrors, 1000 );
-	}
-	function disableIframe() {
-		jQuery( '#step1form' ).attr( 'target', null );
-		clearInterval( updateErrorsInterval );
-	}
+	}) ;
 	function updateErrors() {
 		if ( typeof window.tempframe === 'undefined' || typeof window.tempframe.jQuery === 'undefined' ) {
 			return false;
