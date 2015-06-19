@@ -10,7 +10,6 @@ gp_tmpl_header();
 	<h2><?php _e('Bulk Import Translations'); ?></h2>
 	<form action="" method="post" enctype="multipart/form-data" id="step3">
 	<input type="hidden" name="importer-step" value="3">
-	<input type="hidden" name="working-directory" value="<?php echo esc_attr( $working_directory );?>">
 		<dl>
 			<dt><?php _e( 'Select Sets' ); ?></dt>
 			<dd>
@@ -39,13 +38,11 @@ gp_tmpl_header();
 		</dl>
 	</form>
 
-	<?php if ( gp_post( 'use-iframe' ) ): ?>
-		<script type="text/javascript">
-			parent.document.getElementById('step2').style.display = 'none';
-			parent.document.getElementById('step3').innerHTML = document.getElementById('step3').innerHTML;
-			parent.document.getElementById('step1form').target = "top";
-		</script>
-	<?php endif; ?>
+	<script type="text/javascript">
+		parent.document.getElementById('step2').style.display = 'none';
+		parent.document.getElementById('step3').innerHTML = document.getElementById('step3').innerHTML;
+		parent.document.getElementById('step1form').target = "top";
+	</script>
 
 
 <?php gp_tmpl_footer();
