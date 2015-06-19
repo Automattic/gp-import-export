@@ -13,7 +13,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$this->die_with_404();
 		}
 
-		$can_write = $this->can( 'write', 'project', $project->id );
+		$can_write = $this->can( 'bulk-export', 'project', $project->id );
 
 		if ( isset( GP::$plugins->views ) ) {
 			GP::$plugins->views->set_project_id( $project->id );
@@ -38,7 +38,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 	}
 
 	function exporter_do_get( $project_path ) {
-		@ini_set('memory_limit', '256M');
+		@ini_set( 'memory_limit', '256M' );
 
 		$project = GP::$project->by_path( $project_path );
 
@@ -101,7 +101,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		if ( ! $export_created ) {
 			if ( count( $translations_sets ) == count( $empty ) ) {
-				$this->notices[] = "No matches for your selection";
+				$this->notices[] = 'No matches for your selection';
 				$this->redirect();
 			} else {
 				$this->die_with_error( 'Error creating export files' );
@@ -131,7 +131,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$this->die_with_404();
 		}
 
-		if ( $this->cannot_and_redirect( 'write', 'project', $project->id ) ) {
+		if ( $this->cannot_and_redirect( 'bulk-import', 'project', $project->id ) ) {
 			return;
 		}
 
@@ -145,7 +145,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$this->die_with_404();
 		}
 
-		if ( $this->cannot_and_redirect( 'write', 'project', $project->id ) ) {
+		if ( $this->cannot_and_redirect( 'bulk-import', 'project', $project->id ) ) {
 			return;
 		}
 
@@ -300,15 +300,15 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 
 	function headers_for_download( $filename ) {
-		$this->header("Pragma: public");
-		$this->header("Expires: 0");
-		$this->header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-		$this->header("Cache-Control: public");
-		$this->header("Content-Description: File Transfer");
-		$this->header("Content-type: application/octet-stream");
-		$this->header("Content-Disposition: attachment; filename=\"" . basename( $filename ) . "\"");
-		$this->header("Content-Transfer-Encoding: binary");
-		$this->header("Content-Length: ".filesize( $filename ) );
+		$this->header( 'Pragma: public' );
+		$this->header( 'Expires: 0' );
+		$this->header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+		$this->header( 'Cache-Control: public' );
+		$this->header( 'Content-Description: File Transfer' );
+		$this->header( 'Content-type: application/octet-stream' );
+		$this->header( 'Content-Disposition: attachment; filename="' . basename( $filename ) . '"' );
+		$this->header( 'Content-Transfer-Encoding: binary' );
+		$this->header( 'Content-Length: ' . filesize( $filename ) );
 	}
 
 }
