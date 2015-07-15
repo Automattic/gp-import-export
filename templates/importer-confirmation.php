@@ -16,7 +16,7 @@ gp_tmpl_header();
 			<?php foreach ( $to_import as $po => $destination ) : ?>
 				<p>
 					<?php echo basename( $po ); ?> &rarr; <?php echo $destination['name']; ?>
-					<input type="hidden" name="<?php echo esc_attr( basename( $po, '.po' ) ) ; ?>" value="<?php echo absint( $destination['id'] );?>">
+					<input type="hidden" name="<?php echo esc_attr( basename( $po, '.po' ) ) ; ?>" value="<?php echo absint( $destination['id'] );?>" class="po-mapping" title="<?php echo basename( $po ); ?> &rarr; <?php echo $destination['name']; ?>" />
 				</p>
 			<?php endforeach; ?>
 			</dd>
@@ -41,7 +41,6 @@ gp_tmpl_header();
 	<script type="text/javascript">
 		parent.document.getElementById('step2').style.display = 'none';
 		parent.document.getElementById('step3').innerHTML = document.getElementById('step3').innerHTML;
-		parent.document.getElementById('step1form').target = "top";
 	</script>
 
 
