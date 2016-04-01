@@ -13,7 +13,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$this->die_with_404();
 		}
 
-		$can_write = $this->can( 'write', 'project', $project->id );
+		$can_write = $this->can( 'bulk-export', 'project', $project->id );
 
 		if ( isset( GP::$plugins->views ) ) {
 			GP::$plugins->views->set_project_id( $project->id );
@@ -38,7 +38,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 	}
 
 	function exporter_do_get( $project_path ) {
-		@ini_set('memory_limit', '256M');
+		@ini_set( 'memory_limit', '256M' );
 
 		$project = GP::$project->by_path( $project_path );
 
@@ -101,7 +101,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		if ( ! $export_created ) {
 			if ( count( $translations_sets ) == count( $empty ) ) {
-				$this->notices[] = "No matches for your selection";
+				$this->notices[] = 'No matches for your selection';
 				$this->redirect();
 			} else {
 				$this->die_with_error( 'Error creating export files' );
@@ -131,7 +131,7 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$this->die_with_404();
 		}
 
-		if ( $this->cannot_and_redirect( 'write', 'project', $project->id ) ) {
+		if ( $this->cannot_and_redirect( 'bulk-import', 'project', $project->id ) ) {
 			return;
 		}
 
@@ -145,37 +145,36 @@ class GP_Route_Import_export extends GP_Route_Main {
 			$this->die_with_404();
 		}
 
-		if ( $this->cannot_and_redirect( 'write', 'project', $project->id ) ) {
+		if ( $this->cannot_and_redirect( 'bulk-import', 'project', $project->id ) ) {
 			return;
 		}
 
 		$step = gp_post( 'importer-step', '1' );
 
+		// process the archive file upon each step because it is uploaded on every step because of the server-farm infrastructure
+		$pofiles = $this->process_archive_file( $project );
 
 		switch( $step ) {
 			case 1:
 			default:
-				$this->process_archive_file( $project );
+				$this->show_selections( $project, $pofiles );
 				break;
 			case 2:
-				$this->confirm_selections( $project );
+				$this->confirm_selections( $project, $pofiles );
 				break;
 			case 3:
-				$this->process_imports( $project );
+				$this->process_imports( $project, $pofiles );
 				break;
 		}
 
 	}
 
+	/**
+	 * extract the uploaded ZIP file
+	 * @param  object $project the project derived from the URL
+	 * @return array           the filenames of the extracted .po files
+	 */
 	function process_archive_file( $project ) {
-		$sets = GP::$translation_set->by_project_id( $project->id );
-		$sets_for_select = array_combine(
-			array_map( function( $s ){ return $s->id; }, $sets ),
-			array_map( function( $s ){ return $s->locale . ' - ' . $s->name; }, $sets )
-		);
-
-		$sets_for_select = array( '0' => __('&mdash; Translation Set &mdash;' ) ) + $sets_for_select;
-		unset( $sets );
 
 		if ( ! is_uploaded_file( $_FILES['import-file']['tmp_name'] ) ) {
 			$this->redirect_with_error( __( 'Error uploading the file.' ) );
@@ -190,44 +189,58 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$filename = preg_replace("([^\w\s\d\-_~,;:\[\]\(\].]|[\.]{2,})", '',  $_FILES['import-file']['name'] );
 		$slug = preg_replace( '/\.zip$/', '', $filename );
 
-
-
 		$working_directory = '/bulk-importer-' . $slug;
-		$working_path = sys_get_temp_dir() . $working_directory;
+		$this->working_path = sys_get_temp_dir() . $working_directory;
 
 		// Make sure we have a fresh working directory.
-		if ( file_exists( $working_path ) ) {
-			GP_Import_Export::rrmdir( $working_path );
+		if ( file_exists( $this->working_path ) ) {
+			GP_Import_Export::rrmdir( $this->working_path );
 		}
 
-		mkdir( $working_path );
+		mkdir( $this->working_path );
 
 		$zip = new ZipArchiveExtended;
 		if ( $zip->open( $_FILES['import-file']['tmp_name'] ) ) {
-			$zip->extractToFlatten( $working_path );
+			$zip->extractToFlatten( $this->working_path );
 			$zip->close();
 		}
 
-		$pofiles = glob("$working_path/*.po");
-		if ( empty( $pofiles) ) {
-			GP_Import_Export::rrmdir( $working_path );
+		$pofiles = glob( $this->working_path . '/*.po' );
+		if ( empty( $pofiles ) ) {
+			GP_Import_Export::rrmdir( $this->working_path );
 			$this->redirect_with_error( __( 'No PO files found in zip archive' ) );
 		}
+
+		return $pofiles;
+	}
+
+	/**
+	 * Step 1: extract the uploaded ZIP file
+	 * @param  object $project the project derived from the URL
+	 * @param  array $pofiles the filenames of the extracted .po files
+	 */
+	function show_selections( $project, $pofiles ) {
+		$sets = GP::$translation_set->by_project_id( $project->id );
+		$sets_for_select = array_combine(
+			array_map( function( $s ){ return $s->id; }, $sets ),
+			array_map( function( $s ){ return $s->locale . ' - ' . $s->name; }, $sets )
+		);
+
+		$sets_for_select = array( '0' => __('&mdash; Translation Set &mdash;' ) ) + $sets_for_select;
+		unset( $sets );
 
 		$this->tmpl( 'importer-files', get_defined_vars() );
 	}
 
-	function confirm_selections( $project ) {
 
-		$working_directory = gp_post( 'working-directory' );
-		$working_path = sys_get_temp_dir() . $working_directory;
-
-		if ( $working_path !== realpath( $working_path ) ) {
-			$this->die_with_error( 'Error.' );
-		}
+	/**
+	 * Step 2: Confirm the locale mappings by the user and select
+	 * @param  object $project the project derived from the URL
+	 * @param  array $pofiles the filenames of the extracted .po files
+	 */
+	function confirm_selections( $project, $pofiles ) {
 
 		$to_import = array();
-		$pofiles = glob( "$working_path/*.po" );
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
 			if ( $target_set  ) {
@@ -249,14 +262,13 @@ class GP_Route_Import_export extends GP_Route_Main {
 		$this->tmpl( 'importer-confirmation', get_defined_vars() );
 	}
 
-	function process_imports( $project ) {
+	/**
+	 * Step 3: Do the import
+	 * @param  object $project the project derived from the URL
+	 * @param  array $pofiles the filenames of the extracted .po files
+	 */
 
-		$working_directory = gp_post( 'working-directory' );
-		$working_path = '/tmp' . $working_directory;
-
-		if ( $working_path !== realpath( $working_path ) ) {
-			$this->die_with_error( 'Error.' );
-		}
+	function process_imports( $project, $pofiles ) {
 
 		if ( 'no' == gp_post( 'overwrite', 'yes' ) ) {
 			add_filter( 'translation_set_import_over_existing', '__return_false' );
@@ -268,47 +280,50 @@ class GP_Route_Import_export extends GP_Route_Main {
 			});
 		}
 
-		$pofiles = glob( "$working_path/*.po" );
+		$last = end( $pofiles ); $processed = false;
 		foreach( $pofiles as $po_file ) {
 			$target_set = gp_post( basename( $po_file, '.po') );
 			if ( $target_set  ) {
+				$processed = $po_file;
+				$id = basename( $po_file, '.po' );
 
 				$translation_set = GP::$translation_set->get( $target_set );
 
 				if ( ! $translation_set ) {
-					$this->errors[] = sprintf( __( 'Couldn&#8217;t find translation set id %d!' ), $target_set );
+					$status = sprintf( __( 'Couldn&#8217;t find translation set id %d!' ), $target_set );
+					break;
 				}
 
 				$format = gp_array_get( GP::$formats, 'po', null );
 				$translations = $format->read_translations_from_file( $po_file, $project );
 				if ( ! $translations ) {
-					$this->errors[] = sprintf( __( 'Couldn&#8217;t load translations from file %s!' ), basename( $po_file ) );
-					continue;
+					$status = sprintf( __( 'Couldn&#8217;t load translations from file %s!' ), basename( $po_file ) );
+					break;
 				}
 				$translations_added = $translation_set->import( $translations );
-				$this->notices[] = sprintf( __( '%s translations were added from %s' ), $translations_added, basename( $po_file ) );
+				$status = sprintf( __( '%s translations were added from %s' ), $translations_added, basename( $po_file ) );
 			}
 		}
-		$this->notices = array( implode('<br>', $this->notices ) );
-		$this->errors = array( implode('<br>', $this->errors ) );
 
-		//cleanup
-		GP_Import_Export::rrmdir( $working_path );
+		// cleanup
+		if ( $this->working_path && $processed === $last ) {
+			GP_Import_Export::rrmdir( $this->working_path );
+		}
 
-		$this->redirect();
+		$this->tmpl( 'importer-report-status', get_defined_vars() );
 	}
 
 
 	function headers_for_download( $filename ) {
-		$this->header("Pragma: public");
-		$this->header("Expires: 0");
-		$this->header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-		$this->header("Cache-Control: public");
-		$this->header("Content-Description: File Transfer");
-		$this->header("Content-type: application/octet-stream");
-		$this->header("Content-Disposition: attachment; filename=\"" . basename( $filename ) . "\"");
-		$this->header("Content-Transfer-Encoding: binary");
-		$this->header("Content-Length: ".filesize( $filename ) );
+		$this->header( 'Pragma: public' );
+		$this->header( 'Expires: 0' );
+		$this->header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+		$this->header( 'Cache-Control: public' );
+		$this->header( 'Content-Description: File Transfer' );
+		$this->header( 'Content-type: application/octet-stream' );
+		$this->header( 'Content-Disposition: attachment; filename="' . basename( $filename ) . '"' );
+		$this->header( 'Content-Transfer-Encoding: binary' );
+		$this->header( 'Content-Length: ' . filesize( $filename ) );
 	}
 
 }

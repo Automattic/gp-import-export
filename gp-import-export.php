@@ -1,24 +1,25 @@
 <?php
-
-/* GP_Import_Export
- * This plugin adds "Bulk Import" and "Bulk Export" project actions
+/**
+ * Plugin name: GlotPress: Bulk Import and Export
+ * Plugin author: Automattic
+ *
+ * Description: This plugin adds "Bulk Import" and "Bulk Export" project actions
  *  - Import a zip archive with multiple PO files to different sets
  *  - Export a zip archive of translations based on filters.
  */
 
 require_once( dirname(__FILE__) .'/includes/router.php' );
 
-class GP_Import_Export extends GP_Plugin {
+class GP_Import_Export {
 
-	var $id = 'importer';
+	public $id = 'importer';
 
 	public function __construct() {
-		parent::__construct();
-		$this->add_routes();
-		$this->add_filter( 'gp_project_actions', array( 'args' => 2 ) );
+		add_action( 'template_redirect', array( $this, 'register_routes' ), 5 );
+		add_filter( 'gp_project_actions', array( $this, 'gp_project_actions' ), 5, 2 );
 	}
 
-	function add_routes() {
+	function register_routes() {
 		$path = '(.+?)';
 
 		GP::$router->add( "/importer/$path", array( 'GP_Route_Import_Export', 'importer_get' ), 'get' );
@@ -29,8 +30,15 @@ class GP_Import_Export extends GP_Plugin {
 	}
 
 	function gp_project_actions( $actions, $project ) {
-		$actions[] = gp_link_get( gp_url( '/importer/' . $project->path ), __( 'Bulk Import' ) );
-		$actions[] = gp_link_get( gp_url( '/exporter/' . $project->path ), __( 'Bulk Export' ) );
+
+		if ( GP::$permission->current_user_can( 'bulk-import', 'project', $project->id ) ) {
+			$actions[] = gp_link_get( gp_url( '/importer/' . $project->path ), __( 'Bulk Import' ) );
+		}
+
+		if ( GP::$permission->current_user_can( 'bulk-export', 'project', $project->id ) ) {
+			$actions[] = gp_link_get( gp_url( '/exporter/' . $project->path ), __( 'Bulk Export' ) );
+		}
+
 		return $actions;
 	}
 
@@ -57,4 +65,13 @@ class GP_Import_Export extends GP_Plugin {
 	}
 }
 
-GP::$plugins->import_export = new GP_Import_Export;
+function gp_import_export() {
+	global $gp_import_export;
+
+	if ( ! isset( $gp_import_export ) ) {
+		$gp_import_export = new GP_Import_Export();
+	}
+
+	return $gp_import_export;
+}
+add_action( 'plugins_loaded', 'gp_import_export' );
