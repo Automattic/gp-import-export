@@ -2,6 +2,7 @@
 /**
  * Plugin name: GlotPress: Bulk Import and Export
  * Plugin author: Automattic
+ * Version: 1.0
  *
  * Description: This plugin adds "Bulk Import" and "Bulk Export" project actions
  *  - Import a zip archive with multiple PO files to different sets
@@ -13,6 +14,19 @@ require_once( dirname(__FILE__) .'/includes/router.php' );
 class GP_Import_Export {
 
 	public $id = 'importer';
+	public static $instance = null;
+
+	public static function init() {
+		self::get_instance();
+	}
+
+	public static function get_instance() {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
 
 	public function __construct() {
 		add_action( 'template_redirect', array( $this, 'register_routes' ), 5 );
@@ -65,13 +79,4 @@ class GP_Import_Export {
 	}
 }
 
-function gp_import_export() {
-	global $gp_import_export;
-
-	if ( ! isset( $gp_import_export ) ) {
-		$gp_import_export = new GP_Import_Export();
-	}
-
-	return $gp_import_export;
-}
-add_action( 'plugins_loaded', 'gp_import_export' );
+add_action( 'gp_init', array( 'GP_Import_Export', 'init' ) );

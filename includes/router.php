@@ -1,6 +1,6 @@
 <?php
 
-class GP_Route_Import_export extends GP_Route_Main {
+class GP_Route_Import_Export extends GP_Route_Main {
 
 	function __construct() {
 		$this->template_path = dirname( dirname( __FILE__ ) ) . '/templates/';
@@ -15,9 +15,10 @@ class GP_Route_Import_export extends GP_Route_Main {
 
 		$can_write = $this->can( 'bulk-export', 'project', $project->id );
 
-		if ( isset( GP::$plugins->views ) ) {
-			GP::$plugins->views->set_project_id( $project->id );
-			if ( $views = GP::$plugins->views->views ) {
+		if ( class_exists( 'GP_Views' ) ) {
+			$views = GP_Views::get_instance();
+			$views->set_project_id( $project->id );
+			if ( $views = $views->views ) {
 				$views_for_select = array( '' => __( '&mdash; Select &mdash;' ) );
 				foreach ( $views as $id => $view ) {
 					$views_for_select[ $id ] = $view->name;
@@ -53,9 +54,10 @@ class GP_Route_Import_export extends GP_Route_Main {
 		}
 
 
-		if ( isset( GP::$plugins->views ) ) {
-			GP::$plugins->views->set_project_id( $project->id );
-			$current_view = GP::$plugins->views->current_view;
+		if ( class_exists( 'GP_Views' ) ) {
+			$views = GP_Views::get_instance();
+			$views->set_project_id( $project->id );
+			$current_view = $views->current_view;
 		}
 
 		$project_for_slug = isset( $current_view ) ? $project_path . '/' . $current_view : $project_path;
