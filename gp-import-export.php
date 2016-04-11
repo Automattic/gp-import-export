@@ -14,7 +14,7 @@ require_once( dirname(__FILE__) .'/includes/router.php' );
 class GP_Import_Export {
 
 	public $id = 'importer';
-	public static $instance = null;
+	private static $instance = null;
 
 	public static function init() {
 		self::get_instance();
