@@ -47,7 +47,7 @@ class GP_Route_Import_Export extends GP_Route_Main {
 			$this->die_with_404();
 		}
 
-		$format = gp_array_get( GP::$formats, gp_get( 'format', 'po' ), null );
+		$format = gp_array_get( GP::$formats, gp_get( 'export-format', 'po' ), null );
 
 		if ( ! $format ) {
 			$this->die_with_404();
