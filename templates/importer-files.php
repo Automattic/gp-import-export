@@ -30,7 +30,7 @@ function get_key_to_be_selected( $name_and_id, $options ) {
 ?>
 
 	<h2><?php _e('Bulk Import Translations'); ?></h2>
-	<form action="" method="post" enctype="multipart/form-data" id="step2">
+	<form action="" method="post" enctype="multipart/form-data" id="step2" style="padding: 1em">
 		<input type="hidden" name="importer-step" value="2">
 		<dl>
 			<dt><?php _e( 'Select Sets' ); ?></dt>

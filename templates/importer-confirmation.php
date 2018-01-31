@@ -8,7 +8,7 @@ gp_tmpl_header();
 ?>
 
 	<h2><?php _e('Bulk Import Translations'); ?></h2>
-	<form action="" method="post" enctype="multipart/form-data" id="step3">
+	<form action="" method="post" enctype="multipart/form-data" id="step3" style="padding: 1em">
 	<input type="hidden" name="importer-step" value="3">
 		<dl>
 			<dt><?php _e( 'Select Sets' ); ?></dt>

@@ -28,12 +28,15 @@ class GP_Route_Import_Export extends GP_Route_Main {
 		}
 
 
-		$translation_sets = GP::$translation_set->by_project_id( $project->id );
+		$translations_sets = GP::$translation_set->by_project_id( $project->id );
+		$sets_for_select = apply_filters( 'gp_exporter_translations_sets_for_select', array_combine( array_map( function( $set ) { return $set->id; }, $translations_sets ), array_map( function( $set ) { return $set->name_with_locale(); }, $translations_sets ) ), $project->id );
+		$title = $sets_for_select['wpcom_priority'];
+		unset( $sets_for_select['wpcom_priority'] );
 
-		$values = array_map( function( $set ) { return $set->id; }, $translation_sets );
-		$labels = array_map( function( $set ) { return $set->name_with_locale(); }, $translation_sets );
-		$sets_for_select = apply_filters( 'exporter_translations_sets_for_select', array_combine( $values, $labels ), $project->id );
-		$sets_for_select =  array( '' => __('&mdash; All &mdash;') ) +  $sets_for_select;
+		$translation_set_selectors = array( $title => array() );
+		foreach( apply_filters( 'gp_exporter_translations_sets_for_processing', array( 'wpcom_priority' ), $project->id) as $translation_set ) {
+			$translation_set_selectors[$title][] = $translation_set;
+		}
 
 		$this->tmpl( 'exporter', get_defined_vars() );
 	}
@@ -47,7 +50,7 @@ class GP_Route_Import_Export extends GP_Route_Main {
 			$this->die_with_404();
 		}
 
-		$format = gp_array_get( GP::$formats, gp_get( 'format', 'po' ), null );
+		$format = gp_array_get( GP::$formats, gp_get( 'export-format', 'po' ), null );
 
 		if ( ! $format ) {
 			$this->die_with_404();
@@ -66,6 +69,7 @@ class GP_Route_Import_Export extends GP_Route_Main {
 			$project_for_slug .= '/' . $filters['status'];
 		}
 		$filters['priority'] = array_map( 'intval', $filters['priority'] );
+
 		$slug = str_replace( '/', '-', $project_for_slug ) . '-' . date( 'Y-d-m-Hi' );
 
 		$working_path = '/tmp/' . $slug ;
@@ -274,11 +278,11 @@ class GP_Route_Import_Export extends GP_Route_Main {
 	function process_imports( $project, $pofiles ) {
 
 		if ( 'no' == gp_post( 'overwrite', 'yes' ) ) {
-			add_filter( 'translation_set_import_over_existing', '__return_false' );
+			add_filter( 'gp_translation_set_import_over_existing', '__return_false' );
 		}
 
 		if ( 'waiting' == gp_post( 'status', 'current' ) ) {
-			add_filter( 'translation_set_import_status', function( $status ) {
+			add_filter( 'gp_translation_set_import_status', function( $status ) {
 				return 'waiting';
 			});
 		}
@@ -317,7 +321,7 @@ class GP_Route_Import_Export extends GP_Route_Main {
 	}
 
 
-	function headers_for_download( $filename ) {
+	function headers_for_download( $filename, $last_modified = '' ) {
 		$this->header( 'Pragma: public' );
 		$this->header( 'Expires: 0' );
 		$this->header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
