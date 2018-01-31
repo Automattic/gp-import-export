@@ -23,12 +23,26 @@ if ( ! function_exists( 'gp_multiselect' ) ) {
 
 gp_tmpl_header();
 ?>
+<style type="text/css">
+#selected-translationsets {
+	position: absolute;
+	margin-left: 15em;
+	width: 20em;
+	max-height: 10em;
+	overflow: auto;
+}
+</style>
+
 	<h2><?php _e('Bulk Export Translations'); ?></h2>
-	<form id="export-filters" class="export-filters" action="<?php echo esc_url( gp_url_current() ); ?>/-do" method="get" accept-charset="utf-8">
+	<form id="export-filters" class="export-filters" action="<?php echo esc_url( gp_url_current() ); ?>/-do" method="get" accept-charset="utf-8" style="padding: 1em">
 		<dl>
 			<dt><label>Translation Sets</label></dt>
 			<dd>
-				<?php echo gp_select( 'translation_sets[]', $sets_for_select, null, array( 'multiple' => 'multiple', 'size' => '12', 'style' =>'height:auto;' ) ); ?>
+			<div id="selected-translationsets"></div>
+				<?php echo gp_multiselect( 'translation_sets[]', $sets_for_select, gp_post('translation_sets'), array( 'size' => '12', 'style' =>'height:auto;' ) ); ?>
+				<?php foreach ( $translation_set_selectors as $name => $sets ) {
+					?><br /><a href="" onclick="selectTranslationSets([<?php echo implode(',', $sets); ?>]);return false">Select <?php echo esc_html( $name ); ?></a><?php
+				} ?>
 			</dd>
 			<dt><label><?php _e( 'Translations status:' ); ?></label></dt>
 			<dd>
@@ -87,39 +101,55 @@ gp_tmpl_header();
 		<p><input type="submit" value="<?php echo esc_attr( __( 'Export' ) ); ?>" name="export" /></p>
 	</form>
 
-	<script type="text/javascript">
-	jQuery( '#last-month' ).on( 'click', function() {
-		var d = new Date;
-		d.setDate( 1 );
-		d.setMonth( d.getMonth() - 1 );
-		jQuery( 'input[name=filters\\[before_date_added\\]]' ).val( getMySQLDate( d ) );
-		d = new Date;
-		d.setDate( 0 );
-		jQuery( 'input[name=filters\\[after_date_added\\]]' ).val( getMySQLDate( d ) );
-		return false;
+
+<script type="text/javascript">
+
+var updateSelectedTranslationSets = function(  ) {
+	var count = jQuery( '#translation_sets\\[\\] option:selected' ).length;
+	jQuery( '#selected-translationsets' ).html( (count === 1 ? '1 translation set selected' : count + ' translation sets selected') + '<br/>' + jQuery( '#translation_sets\\[\\] option:selected' ).clone().not(":last").append(", ").end().first().end().text() );
+};
+updateSelectedTranslationSets();
+jQuery( '#translation_sets\\[\\]' ).on( 'change click', updateSelectedTranslationSets );
+
+var selectTranslationSets = function( sets ) {
+	var select = jQuery( '#translation_sets\\[\\] option' ).map( function() {
+		this.selected = jQuery.inArray( Number( this.value ), sets) > -1;
 	});
+	updateSelectedTranslationSets();
+};
 
-	jQuery( '#clear-dates' ).on( 'click', function() {
-		jQuery( 'input[name=filters\\[before_date_added\\]], input[name=filters\\[after_date_added\\]]' ).val( '' );
-		return false;
-	});
+jQuery( '#last-month' ).on( 'click', function() {
+	var d = new Date;
+	d.setDate( 1 );
+	d.setMonth( d.getMonth() - 1 );
+	jQuery( 'input[name=filters\\[before_date_added\\]]' ).val( getMySQLDate( d ) );
+	d = new Date;
+	d.setDate( 0 );
+	jQuery( 'input[name=filters\\[after_date_added\\]]' ).val( getMySQLDate( d ) );
+	return false;
+});
 
-	function getMySQLDate( date ) {
-		var day = date.getDate(),
-			month = date.getMonth() + 1,
-			year = date.getYear();
+jQuery( '#clear-dates' ).on( 'click', function() {
+	jQuery( 'input[name=filters\\[before_date_added\\]], input[name=filters\\[after_date_added\\]]' ).val( '' );
+	return false;
+});
 
-		if ( year < 2000 ) {
-			year += 1900;
-		}
-		if ( month < 10 ) {
-			month = '0' + String( month );
-		}
-		if ( day < 10 ) {
-			day = '0' + String( day );
-		}
-		return year + '-' + month + '-' + day;
+function getMySQLDate( date ) {
+	var day = date.getDate(),
+		month = date.getMonth() + 1,
+		year = date.getYear();
+
+	if ( year < 2000 ) {
+		year += 1900;
 	}
-	</script>
+	if ( month < 10 ) {
+		month = '0' + String( month );
+	}
+	if ( day < 10 ) {
+		day = '0' + String( day );
+	}
+	return year + '-' + month + '-' + day;
+}
+</script>
 
 <?php gp_tmpl_footer();
