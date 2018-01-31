@@ -66,6 +66,7 @@ class GP_Route_Import_Export extends GP_Route_Main {
 			$project_for_slug .= '/' . $filters['status'];
 		}
 		$filters['priority'] = array_map( 'intval', $filters['priority'] );
+
 		$slug = str_replace( '/', '-', $project_for_slug ) . '-' . date( 'Y-d-m-Hi' );
 
 		$working_path = '/tmp/' . $slug ;
@@ -274,11 +275,11 @@ class GP_Route_Import_Export extends GP_Route_Main {
 	function process_imports( $project, $pofiles ) {
 
 		if ( 'no' == gp_post( 'overwrite', 'yes' ) ) {
-			add_filter( 'translation_set_import_over_existing', '__return_false' );
+			add_filter( 'gp_translation_set_import_over_existing', '__return_false' );
 		}
 
 		if ( 'waiting' == gp_post( 'status', 'current' ) ) {
-			add_filter( 'translation_set_import_status', function( $status ) {
+			add_filter( 'gp_translation_set_import_status', function( $status ) {
 				return 'waiting';
 			});
 		}
