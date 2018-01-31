@@ -5,6 +5,22 @@ gp_breadcrumb( array(
 	__('Bulk Export')
 ) );
 
+if ( ! function_exists( 'gp_multiselect' ) ) {
+	function gp_multiselect( $name_and_id, $options, $selected_key = array(), $attrs = array() ) {
+		$attrs['multiple'] = 'multiple';
+		$attributes = gp_html_attributes( $attrs );
+		$attributes = $attributes? " $attributes" : '';
+		$res = "<select name='" . esc_attr( $name_and_id ) . "' id='" . esc_attr( $name_and_id ) . "' $attributes>\n";
+		if ( ! is_array($selected_key) ) $selected_key = array( $selected_key ) ;
+		foreach( $options as $value => $label ) {
+			$selected = in_array( $value, $selected_key ) ? " selected='selected'" : '';
+			$res .= "\t<option value='".esc_attr( $value )."' $selected>" . esc_html( $label ) . "</option>\n";
+		}
+		$res .= "</select>\n";
+		return $res;
+	}
+}
+
 gp_tmpl_header();
 ?>
 	<h2><?php _e('Bulk Export Translations'); ?></h2>
