@@ -338,9 +338,11 @@ class GP_Route_Import_Export extends GP_Route_Main {
 if ( class_exists( 'ZipArchive' ) ) {
 	class ZipArchiveExtended extends ZipArchive {
 
-		public function addDir( $path, $basedir ) {
+		public function addDir( $path, $basedir = null ) {
 			$cwd = getcwd();
-			chdir( $basedir );
+			if ( $basedir) {
+				chdir( $basedir );
+			}
 
 			$this->addEmptyDir( $path );
 			$nodes = glob( $path . '/*' );
@@ -388,9 +390,11 @@ if ( class_exists( 'ZipArchive' ) ) {
 			return true;
 		}
 
-		public function addDir( $path, $basedir ) {
+		public function addDir( $path, $basedir = null ) {
 			$cwd = getcwd();
-			chdir( $basedir );
+			if ( $basedir ) {
+				chdir( $basedir );
+			}
 
 			$zip_command = 'zip -r ' . escapeshellarg( $this->archive_file ) . ' ' . escapeshellarg( $path );
 			$zip_output = array();
@@ -402,6 +406,7 @@ if ( class_exists( 'ZipArchive' ) ) {
 				return false;
 			}
 
+			chdir( $cwd );
 			return true;
 		}
 
