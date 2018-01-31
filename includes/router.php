@@ -318,7 +318,7 @@ class GP_Route_Import_Export extends GP_Route_Main {
 	}
 
 
-	function headers_for_download( $filename ) {
+	function headers_for_download( $filename, $last_modified = '' ) {
 		$this->header( 'Pragma: public' );
 		$this->header( 'Expires: 0' );
 		$this->header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
