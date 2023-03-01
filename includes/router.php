@@ -84,7 +84,7 @@ class GP_Route_Import_Export extends GP_Route_Main {
 
 		mkdir( $working_path );
 
-		$translations_sets = apply_filters( 'exporter_translations_sets_for_processing', gp_get( 'translation_sets' ), $project->id );
+		$translations_sets = apply_filters( 'exporter_translations_sets_for_processing', gp_get( 'translation_sets', array() ), $project->id );
 		if ( ! array_filter( $translations_sets ) || in_array( '0', $translations_sets ) ){
 			$_translation_sets = GP::$translation_set->by_project_id( $project->id );
 			$translations_sets = array_map( function( $set ) { return $set->id; }, $_translation_sets );
