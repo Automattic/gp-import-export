@@ -68,6 +68,9 @@ class GP_Route_Import_Export extends GP_Route_Main {
 		if ( isset( $filters['status'] ) && $filters['status'] != 'current_or_waiting_or_fuzzy_or_untranslated' ) {
 			$project_for_slug .= '/' . $filters['status'];
 		}
+		if ( ! isset( $filters['priority'] ) ) {
+			$filters['priority'] = 0;
+		}
 		$filters['priority'] = array_map( 'intval', $filters['priority'] );
 
 		$slug = str_replace( '/', '-', $project_for_slug ) . '-' . date( 'Y-d-m-Hi' );
