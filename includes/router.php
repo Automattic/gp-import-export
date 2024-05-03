@@ -73,9 +73,9 @@ class GP_Route_Import_Export extends GP_Route_Main {
 		}
 		$filters['priority'] = array_map( 'intval', $filters['priority'] );
 
-		$slug = str_replace( '/', '-', $project_for_slug ) . '-' . date( 'Y-d-m-Hi' );
+		$slug = str_replace( '/', '-', $project_for_slug ) . '-' . uniqid();
 
-		$working_path = '/tmp/' . $slug ;
+		$working_path = sys_get_temp_dir() . '/' . $slug ;
 
 		// Make sure we have a fresh working directory.
 		if ( file_exists( $working_path ) ) {
@@ -99,13 +99,13 @@ class GP_Route_Import_Export extends GP_Route_Main {
 				continue;
 			}
 			$locale = GP_Locales::by_slug( $translation_set->locale );
-			$filename = $working_path . '/' . sprintf(  '%s-%s.' . $format->extension, str_replace( '/', '-', $project_for_slug ), $locale->slug );
+			$filename = $working_path . '/' . sprintf( '%s-%s.' . $format->extension, str_replace( '/', '-', $project_for_slug ), $locale->slug );
 			$entries = GP::$translation->for_export( $project, $translation_set, gp_get( 'filters' ) );
 			if ( empty( $entries ) ) {
 				$empty++;
 				continue;
 			}
-			file_put_contents(  $filename, $format->print_exported_file( $project, $locale, $translation_set, $entries ) );
+			file_put_contents( $filename, $format->print_exported_file( $project, $locale, $translation_set, $entries ) );
 			$export_created = true;
 		}
 
