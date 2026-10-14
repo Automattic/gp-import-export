@@ -30,12 +30,15 @@ class GP_Route_Import_Export extends GP_Route_Main {
 
 		$translations_sets = GP::$translation_set->by_project_id( $project->id );
 		$sets_for_select = apply_filters( 'gp_exporter_translations_sets_for_select', array_combine( array_map( function( $set ) { return $set->id; }, $translations_sets ), array_map( function( $set ) { return $set->name_with_locale(); }, $translations_sets ) ), $project->id );
-		$title = $sets_for_select['wpcom_priority'];
-		unset( $sets_for_select['wpcom_priority'] );
+		$translation_set_selectors = array();
+		if ( isset( $sets_for_select['wpcom_priority'] ) ) {
+			$title = $sets_for_select['wpcom_priority'];
+			unset( $sets_for_select['wpcom_priority'] );
 
-		$translation_set_selectors = array( $title => array() );
-		foreach( apply_filters( 'gp_exporter_translations_sets_for_processing', array( 'wpcom_priority' ), $project->id) as $translation_set ) {
-			$translation_set_selectors[$title][] = $translation_set;
+			$translation_set_selectors[$title] = array();
+			foreach( apply_filters( 'gp_exporter_translations_sets_for_processing', array( 'wpcom_priority' ), $project->id) as $translation_set ) {
+				$translation_set_selectors[$title][] = $translation_set;
+			}
 		}
 
 		$this->tmpl( 'exporter', get_defined_vars() );
